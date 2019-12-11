@@ -1,52 +1,10 @@
 #include <ctype.h>
 #include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
-typedef enum {
-  TK_RESERVED,
-  TK_NUM,
-  TK_EOF,
-} TokenKind;
-
-typedef struct Token Token;
-
-struct Token {
-  TokenKind kind;
-  Token *next;
-  int val;
-  char *str;
-  int len;
-};
-
-Token *token;
-
-typedef enum {
-  ND_ADD,
-  ND_SUB,
-  ND_MUL,
-  ND_DIV,
-  ND_NUM,
-  ND_EQ,
-  ND_NE,
-  ND_LT,
-  ND_LE,
-  ND_GT,
-  ND_GE,
-} NodeKind;
-
-typedef struct Node Node;
-
-struct Node {
-  NodeKind kind;
-  Node *lhs;
-  Node *rhs;
-  int val;
-};
-
-char *user_input;
+#include "seacc.h"
 
 void error_at(char *loc, char *fmt, ...) {
   va_list ap;
@@ -192,8 +150,6 @@ Node *new_node_num(int val) {
   return node;
 }
 
-Node *expr();
-
 Node *primary() {
   if(consume("(")) {
     Node *node = expr();
@@ -263,76 +219,5 @@ Node *equality() {
 
 Node *expr() {
   return equality();
-}
-
-void gen(Node *node) {
-  if(node->kind == ND_NUM) {
-    printf("  push %d\n", node->val);
-    return;
-  }
-
-  gen(node->lhs);
-  gen(node->rhs);
-  printf("  pop rdi\n");
-  printf("  pop rax\n");
-
-  switch(node->kind) {
-    case ND_ADD:
-      printf("  add rax, rdi\n");
-      break;
-    case ND_SUB:
-      printf("  sub rax, rdi\n");
-      break;
-    case ND_MUL:
-      printf("  imul rax, rdi\n");
-      break;
-    case ND_DIV:
-      printf("  cqo\n");
-      printf("  idiv rdi\n");
-      break;
-    case ND_EQ:
-      printf("  cmp rax, rdi\n");
-      printf("  sete al\n");
-      printf("  movzb rax, al\n");
-      break;
-    case ND_NE:
-      printf("  cmp rax, rdi\n");
-      printf("  setne al\n");
-      printf("  movzb rax, al\n");
-      break;
-    case ND_LT:
-      printf("  cmp rax, rdi\n");
-      printf("  setl al\n");
-      printf("  movzb rax, al\n");
-      break;
-    case ND_LE:
-      printf("  cmp rax, rdi\n");
-      printf("  setle al\n");
-      printf("  movzb rax, al\n");
-      break;
-  }
-
-  printf("  push rax\n");
-}
-
-int main(int argc, char *argv[]) {
-  if(argc != 2) {
-    error("引数の数が違います");
-    return 1;
-  }
-
-  user_input = argv[1];
-  token = tokenize(argv[1]);
-  Node *node = expr();
-
-  printf(".intel_syntax noprefix\n");
-  printf(".global main\n");
-  printf("main:\n");
-
-  gen(node);
-
-  printf("  pop rax\n");
-  printf("  ret\n");
-  return 0;
 }
 

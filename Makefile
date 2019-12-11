@@ -1,6 +1,11 @@
 CFLAGS=-std=c11 -g -static
+SRCS=$(wildcard *.c)
+OBJS=$(SRCS:.c=.o)
 
-seacc: seacc.c
+seacc: $(OBJS)
+	$(CC) -o seacc $(OBJS) $(LDFLAGS)
+
+$(OBJS): seacc.h
 
 test: seacc
 	./test.sh
