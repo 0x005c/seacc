@@ -26,8 +26,6 @@ typedef enum {
   ND_NE,
   ND_LT,
   ND_LE,
-  ND_GT,
-  ND_GE,
 } NodeKind;
 
 typedef struct Node Node;
