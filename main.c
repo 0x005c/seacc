@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "seacc.h"
 
 Token *token;
@@ -12,7 +14,9 @@ int main(int argc, char *argv[]) {
 
   user_input = argv[1];
   token = tokenize(argv[1]);
+  locals = calloc(1, sizeof(LVar));
   program();
+  locals = locals->next;
 
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
