@@ -34,5 +34,8 @@ try 1 'return 100+23==123;'
 try 0 'return 123==456;'
 try 0 'return 123!=123;'
 try 1 'return 123!=456;'
+try 10 'x=10; return x;'
+try 101 'x=100; y=1; return x+y;'
+try 0 'x=y=1; return x-y;'
 
 echo OK
