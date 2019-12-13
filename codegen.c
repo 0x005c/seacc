@@ -42,6 +42,20 @@ void gen_while(Node *node, int id) {
   printf(".Lend%d:\n", id);
 }
 
+void gen_for(Node *node, int id) {
+  if(node->lhs) gen(node->lhs);
+  printf(".Lbegin%d:\n", id);
+  if(node->cond) gen(node->cond);
+  else printf("  push 1\n");
+  printf("  pop rax\n");
+  printf("  cmp rax, 0\n");
+  printf("  je  .Lend%d\n", id);
+  gen(node->body);
+  if(node->rhs) gen(node->rhs);
+  printf("  jmp .Lbegin%d\n", id);
+  printf(".Lend%d:\n", id);
+}
+
 int label_id = 0;
 
 void gen(Node *node) {
@@ -59,6 +73,10 @@ void gen(Node *node) {
   }
   if(node->kind == ND_WHILE) {
     gen_while(node, label_id++);
+    return;
+  }
+  if(node->kind == ND_FOR) {
+    gen_for(node, label_id++);
     return;
   }
 

@@ -40,7 +40,7 @@ try 1 'return 123!=456;'
 try 10 'x=10; return x;'
 try 101 'x=100; y=1; return x+y;'
 try 0 'x=y=1; return x-y;'
-try 0 'x=100;x=200;y=0;y=y+10;return 0;'
+try 10 'x=100;x=200;y=0;y=y+10;return y;'
 
 # test control flow
 ## if
@@ -53,5 +53,10 @@ try 3 'x=3; if(x==1) return 1; else if(x==2) return 2; else if(x==3) return 3;'
 try 10 'x=0; while(x<10) x=x+1; return x;'
 try 1 'while(0) return 0; return 1;'
 try 100 'while(1) while(1) return 100;'
+## for
+try 5 'for(;;) return 5; return 2;'
+try 123 'for(x=123;;) return x;'
+try 11 'x=0; for(;;x=x+1) if(x>10) return x;'
+try 10 'y=0; for(x=0; x<10; x=x+1) y=y+1; return y;'
 
 echo OK
