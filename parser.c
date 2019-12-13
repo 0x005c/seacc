@@ -171,6 +171,12 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if(memcmp(p, "while", 5) == 0 && !is_alnum(p[5])) {
+      cur = new_token(TK_WHILE, cur, p, 5);
+      p += 5;
+      continue;
+    }
+
     if(is_alnum(*p)) {
       int len;
       for(len=0; is_alnum(*(p+len)); len++);
@@ -329,6 +335,16 @@ Node *stmt() {
       token = token->next;
       node->elsebody = stmt();
     }
+    return node;
+  }
+  else if(token->kind == TK_WHILE) {
+    token = token->next;
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    expect("(");
+    node->cond = expr();
+    expect(")");
+    node->body = stmt();
     return node;
   }
   else {

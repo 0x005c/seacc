@@ -5,6 +5,7 @@ typedef enum {
   TK_IDENT,
   TK_RETURN,
   TK_IF,
+  TK_WHILE,
   TK_ELSE,
   TK_NUM,
   TK_EOF,
@@ -34,6 +35,7 @@ typedef enum {
   ND_ASSIGN,
   ND_RETURN,
   ND_IF,
+  ND_WHILE,
 } NodeKind;
 
 typedef struct Node Node;
