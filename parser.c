@@ -41,7 +41,7 @@ Token *consume_ident() {
 
   Token *tok = token;
   token = token->next;
-  return token;
+  return tok;
 }
 
 void expect(char *op) {
@@ -219,7 +219,7 @@ Node *primary() {
       lvar->next = locals;
       lvar->name = tok->str;
       lvar->len = tok->len;
-      lvar->offset = locals->offset + 8;
+      lvar->offset = locals ? locals->offset + 8 : 8;
       node->offset = lvar->offset;
       locals = lvar;
     }
