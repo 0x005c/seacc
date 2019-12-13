@@ -23,6 +23,7 @@ int main(int argc, char *argv[]) {
 
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
+  printf("  sub rsp, %d\n", locals ? locals->offset : 0);
 
   for(int i=0; code[i]; i++) {
     gen(code[i]);
