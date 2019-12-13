@@ -181,8 +181,6 @@ LVar *find_lvar(Token *tok) {
   return NULL;
 }
 
-Node *code[100];
-
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -316,9 +314,16 @@ Node *stmt() {
 }
 
 void program() {
+  Node head;
+  head.next = NULL;
+  Node *cur = &head;
+
   int i = 0;
-  while(!at_eof())
-    code[i++] = stmt();
-  code[i] = NULL;
+  while(!at_eof()) {
+    cur->next = stmt();
+    cur = cur->next;
+  }
+  cur->next = NULL;
+  nodes = head.next;
 }
 

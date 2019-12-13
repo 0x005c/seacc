@@ -37,6 +37,8 @@ typedef struct Node Node;
 
 struct Node {
   NodeKind kind;
+  Node *next;
+
   Node *lhs;
   Node *rhs;
   int val;
@@ -64,5 +66,5 @@ void gen(Node *node);
 
 Token *token;
 char *user_input;
-Node *code[100];
+Node *nodes;
 LVar *locals;
