@@ -36,6 +36,14 @@ bool consume(char *op) {
   return true;
 }
 
+bool consume_kind(TokenKind kind) {
+  if(token->kind == kind) {
+    token = token->next;
+    return true;
+  }
+  return false;
+}
+
 Token *consume_ident() {
   if(token->kind != TK_IDENT) return NULL;
 
@@ -362,23 +370,20 @@ Node *stmt() {
     return node;
   }
 
-  if(token->kind == TK_IF) {
-    token = token->next;
+  if(consume_kind(TK_IF)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_IF;
     expect("(");
     node->cond = expr();
     expect(")");
     node->body = stmt();
-    if(token->kind == TK_ELSE) {
-      token = token->next;
+    if(consume_kind(TK_ELSE)) {
       node->elsebody = stmt();
     }
     return node;
   }
 
-  if(token->kind == TK_WHILE) {
-    token = token->next;
+  if(consume_kind(TK_WHILE)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_WHILE;
     expect("(");
@@ -388,8 +393,7 @@ Node *stmt() {
     return node;
   }
 
-  if(token->kind == TK_FOR) {
-    token = token->next;
+  if(consume_kind(TK_FOR)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_FOR;
     expect("(");
@@ -411,8 +415,7 @@ Node *stmt() {
     return node;
   }
 
-  if(token->kind == TK_RETURN) {
-    token = token->next;
+  if(consume_kind(TK_RETURN)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr();
