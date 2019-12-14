@@ -237,12 +237,14 @@ Node *primary() {
   Token *tok = consume_ident();
   if(tok) {
     if(consume("(")) {
+      Function *func = calloc(1, sizeof(Function));
+      func->name = tok->str;
+      func->len = tok->len;
       expect(")");
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_CALL;
       node->next = NULL;
-      node->name = tok->str;
-      node->len = tok->len;
+      node->func = func;
       return node;
     }
     else {

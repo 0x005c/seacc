@@ -42,6 +42,8 @@ typedef enum {
   ND_CALL,
 } NodeKind;
 
+typedef struct Function Function;
+
 typedef struct Node Node;
 
 // TODO: clean up
@@ -55,10 +57,9 @@ struct Node {
   Node *body;
   Node *elsebody;
 
-  char *name;
-  int len;
-  int offset;
+  Function *func;
 
+  int offset;
   int val;
 };
 
@@ -71,11 +72,10 @@ struct LVar {
   int offset;
 };
 
-typedef struct Function Function;
-
 struct Function {
   Function *next;
   Node *body;
+  LVar *args;
   LVar *locals;
   char *name;
   int len;

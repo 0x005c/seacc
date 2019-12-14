@@ -95,8 +95,8 @@ void gen_node(Node *node) {
   }
   if(node->kind == ND_CALL) {
     char fname[255];
-    strncpy(fname, node->name, node->len);
-    fname[node->len] = '\0';
+    strncpy(fname, node->func->name, node->func->len);
+    fname[node->func->len] = '\0';
     int padding = functions->locals ? (16-(functions->locals->offset%16)) % 16 : 0;
     printf("  sub rsp, %d\n", padding);
     printf("  call %s\n", fname);
