@@ -108,7 +108,7 @@ Token *tokenize(char *p) {
         || *p == '{'
         || *p == '}'
         || *p == ';'
-        || *p == ';') {
+        || *p == ',') {
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -227,6 +227,10 @@ Node *new_node_num(int val) {
   return node;
 }
 
+/* primary = "(" expr ")"
+ *         | ident "(" (expr ",")* expr? ")"
+ *         | ident
+ */
 Node *primary() {
   if(consume("(")) {
     Node *node = expr();
@@ -240,7 +244,20 @@ Node *primary() {
       Function *func = calloc(1, sizeof(Function));
       func->name = tok->str;
       func->len = tok->len;
-      expect(")");
+      if(consume(")")) func->args = NULL;
+      else {
+        Node head = {.next = NULL};
+        Node *cur = &head;
+        for(;;) {
+          cur->next = expr();
+          cur = cur->next;
+          if(!consume(",")) {
+            expect(")");
+            break;
+          }
+        }
+        func->args = head.next;
+      }
       Node *node = calloc(1, sizeof(Node));
       node->kind = ND_CALL;
       node->next = NULL;

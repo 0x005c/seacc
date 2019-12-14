@@ -75,7 +75,7 @@ struct LVar {
 struct Function {
   Function *next;
   Node *body;
-  LVar *args;
+  Node *args;
   LVar *locals;
   char *name;
   int len;

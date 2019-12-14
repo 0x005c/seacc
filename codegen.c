@@ -98,6 +98,17 @@ void gen_node(Node *node) {
     strncpy(fname, node->func->name, node->func->len);
     fname[node->func->len] = '\0';
     int padding = functions->locals ? (16-(functions->locals->offset%16)) % 16 : 0;
+
+    char *arg_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    int *args[6] = {};
+    Node *cur = node->func->args;
+    for(int i=0; i<6; i++) {
+      if(!cur) break;
+      gen_node(cur);
+      printf("  pop %s\n", arg_reg[i]);
+      cur = cur->next;
+    }
+
     printf("  sub rsp, %d\n", padding);
     printf("  call %s\n", fname);
     printf("  add rsp, %d\n", padding);
