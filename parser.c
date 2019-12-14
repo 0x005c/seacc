@@ -336,6 +336,14 @@ Node *expr() {
   return assign();
 }
 
+/*
+ * stmt = expr ";"
+ *      | "return" expr ";"
+ *      | "if" "(" expr ")" stmt ("else" stmt)?
+ *      | "while" "(" expr ")" stmt
+ *      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+ *      | "{" stmt* "}"
+ */
 Node *stmt() {
   Node *node;
 
@@ -354,13 +362,7 @@ Node *stmt() {
     return node;
   }
 
-  if(token->kind == TK_RETURN) {
-    token = token->next;
-    node = calloc(1, sizeof(Node));
-    node->kind = ND_RETURN;
-    node->lhs = expr();
-  }
-  else if(token->kind == TK_IF) {
+  if(token->kind == TK_IF) {
     token = token->next;
     node = calloc(1, sizeof(Node));
     node->kind = ND_IF;
@@ -374,7 +376,8 @@ Node *stmt() {
     }
     return node;
   }
-  else if(token->kind == TK_WHILE) {
+
+  if(token->kind == TK_WHILE) {
     token = token->next;
     node = calloc(1, sizeof(Node));
     node->kind = ND_WHILE;
@@ -384,7 +387,8 @@ Node *stmt() {
     node->body = stmt();
     return node;
   }
-  else if(token->kind == TK_FOR) {
+
+  if(token->kind == TK_FOR) {
     token = token->next;
     node = calloc(1, sizeof(Node));
     node->kind = ND_FOR;
@@ -393,16 +397,25 @@ Node *stmt() {
       node->lhs = expr();
       expect(";");
     }
+
     if(!consume(";")) {
       node->cond = expr();
       expect(";");
     }
+
     if(!consume(")")) {
       node->rhs = expr();
       expect(")");
     }
     node->body = stmt();
     return node;
+  }
+
+  if(token->kind == TK_RETURN) {
+    token = token->next;
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_RETURN;
+    node->lhs = expr();
   }
   else {
     node = expr();
