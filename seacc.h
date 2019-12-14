@@ -38,10 +38,13 @@ typedef enum {
   ND_IF,
   ND_WHILE,
   ND_FOR,
+  ND_BLOCK,
+  ND_CALL,
 } NodeKind;
 
 typedef struct Node Node;
 
+// TODO: clean up
 struct Node {
   NodeKind kind;
   Node *next;
@@ -51,6 +54,10 @@ struct Node {
   Node *cond;
   Node *body;
   Node *elsebody;
+
+  char *name;
+  int len;
+
   int val;
   int offset;
 };

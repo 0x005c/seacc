@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "seacc.h"
 
 void gen_lval(Node *node) {
@@ -86,6 +88,17 @@ void gen(Node *node) {
       cur = cur->next;
       printf("  pop rax\n");
     }
+    printf("  push rax\n");
+    return;
+  }
+  if(node->kind == ND_CALL) {
+    char fname[255];
+    strncpy(fname, node->name, node->len);
+    fname[node->len] = '\0';
+    int padding = locals ? (16-(locals->offset%16)) % 16 : 0;
+    printf("  sub rsp, %d\n", padding);
+    printf("  call %s\n", fname);
+    printf("  add rsp, %d\n", padding);
     printf("  push rax\n");
     return;
   }
