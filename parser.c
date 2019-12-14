@@ -143,6 +143,11 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if(*p == '{' || *p == '}') {
+      cur = new_token(TK_RESERVED, cur, p++, 1);
+      continue;
+    }
+
     if(isdigit(*p)) {
       int digitlen = 0;
       while(isdigit(*(p+digitlen))) {
@@ -322,6 +327,21 @@ Node *expr() {
 
 Node *stmt() {
   Node *node;
+
+  if(consume("{")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->next = NULL;
+    Node head = {.next = NULL};
+    Node *cur = &head;
+    while(!consume("}")) {
+      cur->next = stmt();
+      cur = cur->next;
+    }
+    cur->next = NULL;
+    node->body = head.next;
+    return node;
+  }
 
   if(token->kind == TK_RETURN) {
     token = token->next;

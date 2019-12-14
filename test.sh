@@ -59,4 +59,9 @@ try 123 'for(x=123;;) return x;'
 try 11 'x=0; for(;;x=x+1) if(x>10) return x;'
 try 10 'y=0; for(x=0; x<10; x=x+1) y=y+1; return y;'
 
+# test block
+try 10 '{x=0; x=x+10; return x;}'
+try 2 'x=10; if(x==10) {x=x*2; return x/10;}'
+try 123 'if(0==0) {} return 123;'
+
 echo OK

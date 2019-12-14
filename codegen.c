@@ -79,6 +79,16 @@ void gen(Node *node) {
     gen_for(node, label_id++);
     return;
   }
+  if(node->kind == ND_BLOCK) {
+    Node *cur = node->body;
+    while(cur) {
+      gen(cur);
+      cur = cur->next;
+      printf("  pop rax\n");
+    }
+    printf("  push rax\n");
+    return;
+  }
 
   switch(node->kind) {
     case ND_NUM:
