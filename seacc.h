@@ -57,15 +57,26 @@ struct Node {
 
   char *name;
   int len;
+  int offset;
 
   int val;
-  int offset;
 };
 
 typedef struct LVar LVar;
 
 struct LVar {
   LVar *next;
+  char *name;
+  int len;
+  int offset;
+};
+
+typedef struct Function Function;
+
+struct Function {
+  Function *next;
+  Node *body;
+  LVar *locals;
   char *name;
   int len;
   int offset;
@@ -79,9 +90,8 @@ Token *tokenize(char *p);
 Node *expr();
 void program();
 
-void gen(Node *node);
+void gen(Function *func);
 
 Token *token;
 char *user_input;
-Node *nodes;
-LVar *locals;
+Function *functions;

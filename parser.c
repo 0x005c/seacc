@@ -212,7 +212,7 @@ Token *tokenize(char *p) {
 }
 
 LVar *find_lvar(Token *tok) {
-  for(LVar *var = locals; var; var = var->next)
+  for(LVar *var = functions->locals; var; var = var->next)
     if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
       return var;
   return NULL;
@@ -261,12 +261,12 @@ Node *primary() {
       }
       else {
         lvar = calloc(1, sizeof(LVar));
-        lvar->next = locals;
+        lvar->next = functions->locals;
         lvar->name = tok->str;
         lvar->len = tok->len;
-        lvar->offset = locals ? locals->offset + 8 : 8;
+        lvar->offset = functions->locals ? functions->locals->offset + 8 : 8;
         node->offset = lvar->offset;
-        locals = lvar;
+        functions->locals = lvar;
       }
       return node;
     }
@@ -429,16 +429,18 @@ Node *stmt() {
 }
 
 void program() {
-  Node head;
-  head.next = NULL;
-  Node *cur = &head;
-
-  int i = 0;
   while(!at_eof()) {
-    cur->next = stmt();
-    cur = cur->next;
+    Token *tok = consume_ident();
+    if(!tok) error("Function definition starts with identifier\n");
+    Function *func = calloc(1, sizeof(Function));
+    func->locals = NULL;
+    func->name = tok->str;
+    func->len = tok->len;
+    func->next = functions;
+    functions = func;
+    expect("(");
+    expect(")");
+    func->body = stmt(); // XXX: allow only block
   }
-  cur->next = NULL;
-  nodes = head.next;
 }
 
