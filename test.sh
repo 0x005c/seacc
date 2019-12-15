@@ -77,4 +77,7 @@ try 7 'f(x) { return x; } main() { return f(7); }'
 try 8 'fib(x) { if(x<3) return 1; return fib(x-1) + fib(x-2); } main() { return fib(6); }'
 try 10 'main() {x=0; if(x>1) return x; return x+10; }'
 
+# test pointer
+try 10 'main() {x = 10; y = &x; return *y;}'
+
 echo OK

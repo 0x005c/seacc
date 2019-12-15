@@ -40,6 +40,8 @@ typedef enum {
   ND_FOR,
   ND_BLOCK,
   ND_CALL,
+  ND_ADDR,
+  ND_DEREF,
 } NodeKind;
 
 typedef struct Function Function;
