@@ -87,8 +87,15 @@ void gen_node(Node *node) {
     Node *cur = node->body;
     while(cur) {
       gen_node(cur);
+      switch(cur->kind) {
+        case ND_IF:
+        case ND_WHILE:
+        case ND_FOR:
+          break;
+        default:
+          printf("  pop rax\n");
+      }
       cur = cur->next;
-      printf("  pop rax\n");
     }
     printf("  push rax\n");
     return;
