@@ -277,7 +277,8 @@ Node *primary() {
         lvar->next = functions->locals;
         lvar->name = tok->str;
         lvar->len = tok->len;
-        lvar->offset = functions->locals ? functions->locals->offset + 8 : 8;
+        lvar->offset = functions->offset + 8;
+        functions->offset = lvar->offset;
         node->offset = lvar->offset;
         functions->locals = lvar;
       }
@@ -441,6 +442,9 @@ Node *stmt() {
   return node;
 }
 
+/*
+ * program = ident "(" (ident ",")* ident? ")" block
+ */
 void program() {
   while(!at_eof()) {
     Token *tok = consume_ident();
@@ -452,7 +456,28 @@ void program() {
     func->next = functions;
     functions = func;
     expect("(");
-    expect(")");
+    if(consume(")"))
+      func->params = NULL;
+    else {
+      LVar head = {.next = NULL};
+      LVar *cur = &head;
+      for(;;) {
+        Token *tok = consume_ident();
+        if(!tok) error("Identifier expected");
+        LVar *lvar = calloc(1, sizeof(LVar));
+        lvar->next = NULL;
+        lvar->name = tok->str;
+        lvar->len = tok->len;
+        lvar->offset = functions->offset + 8;
+        functions->offset = lvar->offset;
+        cur->next = lvar;
+        cur = cur->next;
+        if(!consume(",")) break;
+      }
+      expect(")");
+      functions->locals = head.next;
+      func->params = head.next;
+    }
     func->body = stmt(); // XXX: allow only block
   }
 }

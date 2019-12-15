@@ -188,10 +188,21 @@ void gen(Function *func) {
   fname[func->len] = '\0';
   printf("%s:\n", fname);
 
+  int offset = func->offset;
+  if(func->locals) offset += func->locals->offset;
+
   // prologue
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, %d\n", functions->locals ? functions->locals->offset : 0);
+  printf("  sub rsp, %d\n", func->offset);
+
+  char *param_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+  LVar *cur = func->params;
+  for(int i=0; i<6; i++) {
+    if(!cur) break;
+    printf("  mov [rbp-%d], %s\n", cur->offset, param_reg[i]);
+    cur = cur->next;
+  }
 
   gen_node(func->body);
 

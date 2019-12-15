@@ -77,6 +77,7 @@ struct Function {
   Node *body;
   Node *args;
   LVar *locals;
+  LVar *params;
   char *name;
   int len;
   int offset;

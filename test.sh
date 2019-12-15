@@ -68,5 +68,13 @@ try 123 'main() {if(0==0) {} return 123;}'
 try 10 'main    ()     { return 10   ; }'
 try 20 'f() { return 20; } main() { return f(); }'
 try 30 'g() { return 30; } f() { return g(); } main() { return f(); }'
+try 40 'f(x) { return x+x; } main() { return f(f(10)); }'
+try 50 'add(x,y) { return x+y; } main() { return add(22, 28); }'
+try 60 'f(x) { if(x==0) return 60; else return f(x-1); } main() { return f(5); }'
+try 70 'f(a,b,c,d,e,f) { return a+b+c+d+e+f; } main() { return f(10,10,10,10,10,20); }'
+try 6 'fac(x) { if(x>0) return x*fac(x-1); return 1; } main() { return fac(3); }'
+try 7 'f(x) { return x; } main() { return f(7); }'
+try 8 'fib(x) { if(x<3) return 1; else return fib(x-1) + fib(x-2); } main() { return fib(6); }'
+# XXX: try 10 'main() {x=0; if(x>1) return x; return x+10; }'
 
 echo OK
