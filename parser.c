@@ -51,7 +51,7 @@ bool at_eof() {
 }
 
 LVar *find_lvar(Token *tok) {
-  for(LVar *var = functions->locals; var; var = var->next)
+  for(LVar *var = nodes->func->locals; var; var = var->next)
     if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
       return var;
   return NULL;
@@ -119,13 +119,13 @@ Node *primary() {
       }
       else {
         lvar = calloc(1, sizeof(LVar));
-        lvar->next = functions->locals;
+        lvar->next = nodes->func->locals;
+        nodes->func->locals = lvar;
+
         lvar->name = tok->str;
         lvar->len = tok->len;
-        lvar->offset = functions->offset + 8;
-        functions->offset = lvar->offset;
-        node->offset = lvar->offset;
-        functions->locals = lvar;
+        lvar->offset = nodes->offset + 8;
+        nodes->offset = node->offset = lvar->offset;
       }
       return node;
     }
@@ -308,8 +308,11 @@ void program() {
     func->locals = NULL;
     func->name = tok->str;
     func->len = tok->len;
-    func->next = functions;
-    functions = func;
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_DEFUN;
+    node->func = func;
+    node->next = nodes;
+    nodes = node;
     expect("(");
     if(consume(")"))
       func->params = NULL;
@@ -323,14 +326,14 @@ void program() {
         lvar->next = NULL;
         lvar->name = tok->str;
         lvar->len = tok->len;
-        lvar->offset = functions->offset + 8;
-        functions->offset = lvar->offset;
+        lvar->offset = nodes->offset + 8;
+        node->offset = lvar->offset;
         cur->next = lvar;
         cur = cur->next;
         if(!consume(",")) break;
       }
       expect(")");
-      functions->locals = head.next;
+      func->locals = head.next;
       func->params = head.next;
     }
     func->body = stmt(); // XXX: allow only block

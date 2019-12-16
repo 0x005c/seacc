@@ -2,7 +2,7 @@
 
 #include "seacc.h"
 
-void gen_node(Node *node);
+void gen(Node *node);
 
 void gen_lval(Node *node) {
   if(node->kind != ND_LVAR)
@@ -15,56 +15,56 @@ void gen_lval(Node *node) {
 
 void gen_if(Node *node, int id) {
   if(node->elsebody) {
-    gen_node(node->cond);
+    gen(node->cond);
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je  .Lelse%d\n", id);
-    gen_node(node->body);
+    gen(node->body);
     printf("  jmp .Lend%d\n", id);
     printf(".Lelse%d:\n", id);
-    gen_node(node->elsebody);
+    gen(node->elsebody);
     printf(".Lend%d:\n", id);
   }
   else {
-    gen_node(node->cond);
+    gen(node->cond);
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je  .Lend%d\n", id);
-    gen_node(node->body);
+    gen(node->body);
     printf(".Lend%d:\n", id);
   }
 }
 
 void gen_while(Node *node, int id) {
   printf(".Lbegin%d:\n", id);
-  gen_node(node->cond);
+  gen(node->cond);
   printf("  pop rax\n");
   printf("  cmp rax, 0\n");
   printf("  je  .Lend%d\n", id);
-  gen_node(node->body);
+  gen(node->body);
   printf("  jmp .Lbegin%d\n", id);
   printf(".Lend%d:\n", id);
 }
 
 void gen_for(Node *node, int id) {
-  if(node->lhs) gen_node(node->lhs);
+  if(node->lhs) gen(node->lhs);
   printf(".Lbegin%d:\n", id);
-  if(node->cond) gen_node(node->cond);
+  if(node->cond) gen(node->cond);
   else printf("  push 1\n");
   printf("  pop rax\n");
   printf("  cmp rax, 0\n");
   printf("  je  .Lend%d\n", id);
-  gen_node(node->body);
-  if(node->rhs) gen_node(node->rhs);
+  gen(node->body);
+  if(node->rhs) gen(node->rhs);
   printf("  jmp .Lbegin%d\n", id);
   printf(".Lend%d:\n", id);
 }
 
 int label_id = 0;
 
-void gen_node(Node *node) {
+void gen(Node *node) {
   if(node->kind == ND_RETURN) {
-    gen_node(node->lhs);
+    gen(node->lhs);
     printf("  pop rax\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
@@ -86,7 +86,7 @@ void gen_node(Node *node) {
   if(node->kind == ND_BLOCK) {
     Node *cur = node->body;
     while(cur) {
-      gen_node(cur);
+      gen(cur);
       switch(cur->kind) {
         case ND_IF:
         case ND_WHILE:
@@ -104,14 +104,14 @@ void gen_node(Node *node) {
     char fname[255];
     strncpy(fname, node->func->name, node->func->len);
     fname[node->func->len] = '\0';
-    int padding = functions->locals ? (16-(functions->locals->offset%16)) % 16 : 0;
+    int padding = 16-(nodes->offset%16);
 
     char *arg_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
     int *args[6] = {};
     Node *cur = node->func->args;
     for(int i=0; i<6; i++) {
       if(!cur) break;
-      gen_node(cur);
+      gen(cur);
       printf("  pop %s\n", arg_reg[i]);
       cur = cur->next;
     }
@@ -120,6 +120,37 @@ void gen_node(Node *node) {
     printf("  call %s\n", fname);
     printf("  add rsp, %d\n", padding);
     printf("  push rax\n");
+    return;
+  }
+  if(node->kind == ND_DEFUN) {
+    char fname[255];
+    Function *func = node->func;
+    strncpy(fname, func->name, func->len);
+    fname[func->len] = '\0';
+    printf("%s:\n", fname);
+
+    int offset = node->offset;
+    if(func->locals) offset += func->locals->offset;
+
+    // prologue
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, %d\n", offset);
+
+    char *param_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    LVar *cur = func->params;
+    for(int i=0; i<6; i++) {
+      if(!cur) break;
+      printf("  mov [rbp-%d], %s\n", cur->offset, param_reg[i]);
+      cur = cur->next;
+    }
+
+    gen(func->body);
+
+    // epilogue
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
     return;
   }
 
@@ -135,7 +166,7 @@ void gen_node(Node *node) {
       return;
     case ND_ASSIGN:
       gen_lval(node->lhs);
-      gen_node(node->rhs);
+      gen(node->rhs);
 
       printf("  pop rdi\n");
       printf("  pop rax\n");
@@ -146,7 +177,7 @@ void gen_node(Node *node) {
       gen_lval(node->lhs);
       return;
     case ND_DEREF:
-      gen_node(node->lhs);
+      gen(node->lhs);
       printf("  pop rax\n");
       printf("  mov rax, [rax]\n");
       printf("  push rax\n");
@@ -155,8 +186,8 @@ void gen_node(Node *node) {
       break;
   }
 
-  gen_node(node->lhs);
-  gen_node(node->rhs);
+  gen(node->lhs);
+  gen(node->rhs);
 
   printf("  pop rdi\n");
   printf("  pop rax\n");
@@ -198,35 +229,5 @@ void gen_node(Node *node) {
   }
 
   printf("  push rax\n");
-}
-
-void gen(Function *func) {
-  char fname[255];
-  strncpy(fname, func->name, func->len);
-  fname[func->len] = '\0';
-  printf("%s:\n", fname);
-
-  int offset = func->offset;
-  if(func->locals) offset += func->locals->offset;
-
-  // prologue
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
-  printf("  sub rsp, %d\n", func->offset);
-
-  char *param_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-  LVar *cur = func->params;
-  for(int i=0; i<6; i++) {
-    if(!cur) break;
-    printf("  mov [rbp-%d], %s\n", cur->offset, param_reg[i]);
-    cur = cur->next;
-  }
-
-  gen_node(func->body);
-
-  // epilogue
-  printf("  mov rsp, rbp\n");
-  printf("  pop rbp\n");
-  printf("  ret\n");
 }
 

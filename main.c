@@ -14,13 +14,13 @@ int main(int argc, char *argv[]) {
 
   user_input = argv[1];
   token = tokenize(argv[1]);
-  functions = NULL;
+  nodes = NULL;
   program();
 
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
 
-  for(Function *cur = functions; cur; cur = cur->next) gen(cur);
+  for(Node *cur = nodes; cur; cur = cur->next) gen(cur);
 
   return 0;
 }

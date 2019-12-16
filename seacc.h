@@ -40,6 +40,7 @@ typedef enum {
   ND_FOR,
   ND_BLOCK,
   ND_CALL,
+  ND_DEFUN,
   ND_ADDR,
   ND_DEREF,
 } NodeKind;
@@ -93,8 +94,8 @@ Token *tokenize(char *p);
 Node *expr();
 void program();
 
-void gen(Function *func);
+void gen(Node *node);
 
 Token *token;
 char *user_input;
-Function *functions;
+Node *nodes;
