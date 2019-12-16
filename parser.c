@@ -118,14 +118,7 @@ Node *primary() {
         node->offset = lvar->offset;
       }
       else {
-        lvar = calloc(1, sizeof(LVar));
-        lvar->next = nodes->func->locals;
-        nodes->func->locals = lvar;
-
-        lvar->name = tok->str;
-        lvar->len = tok->len;
-        lvar->offset = nodes->offset + 8;
-        nodes->offset = node->offset = lvar->offset;
+        error_at(tok->str, "Unexpected token");
       }
       return node;
     }
@@ -220,6 +213,7 @@ Node *expr() {
  *      | "while" "(" expr ")" stmt
  *      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
  *      | "{" stmt* "}"
+ *      | "int" ident ";"
  */
 Node *stmt() {
   Node *node;
@@ -237,6 +231,25 @@ Node *stmt() {
     cur->next = NULL;
     node->body = head.next;
     return node;
+  }
+
+  if(consume_kind(TK_INT)) {
+    Token *tok = consume_ident();
+    if(!tok) error_at(token->str, "Identifier expected");
+    LVar *lvar = find_lvar(tok);
+    if(lvar) error_at(tok->str, "Second declaration");
+    lvar = calloc(1, sizeof(LVar));
+    lvar->next = nodes->func->locals;
+    nodes->func->locals = lvar;
+
+    lvar->name = tok->str;
+    lvar->len = tok->len;
+    lvar->offset = nodes->offset + 8;
+    nodes->offset = lvar->offset;
+
+    expect(";");
+
+    return stmt();
   }
 
   if(consume_kind(TK_IF)) {

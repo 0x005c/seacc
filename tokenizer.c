@@ -124,6 +124,12 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if(memcmp(p, "int", 3) == 0 && !is_alnum(p[3])) {
+      cur = new_token(TK_INT, cur, p, 3);
+      p += 3;
+      continue;
+    }
+
     if(is_alnum(*p)) {
       int len;
       for(len=0; is_alnum(*(p+len)); len++);
