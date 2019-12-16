@@ -63,26 +63,6 @@ void gen_for(Node *node, int id) {
 int label_id = 0;
 
 void gen(Node *node) {
-  if(node->kind == ND_RETURN) {
-    gen(node->lhs);
-    printf("  pop rax\n");
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
-    printf("  ret\n");
-    return;
-  }
-  if(node->kind == ND_IF) {
-    gen_if(node, label_id++);
-    return;
-  }
-  if(node->kind == ND_WHILE) {
-    gen_while(node, label_id++);
-    return;
-  }
-  if(node->kind == ND_FOR) {
-    gen_for(node, label_id++);
-    return;
-  }
   if(node->kind == ND_BLOCK) {
     Node *cur = node->body;
     while(cur) {
@@ -155,6 +135,22 @@ void gen(Node *node) {
   }
 
   switch(node->kind) {
+    case ND_IF:
+      gen_if(node, label_id++);
+      return;
+    case ND_WHILE:
+      gen_while(node, label_id++);
+      return;
+    case ND_FOR:
+      gen_for(node, label_id++);
+      return;
+    case ND_RETURN:
+      gen(node->lhs);
+      printf("  pop rax\n");
+      printf("  mov rsp, rbp\n");
+      printf("  pop rbp\n");
+      printf("  ret\n");
+      return;
     case ND_NUM:
       printf("  push %d\n", node->val);
       return;
