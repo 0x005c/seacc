@@ -315,6 +315,7 @@ Node *stmt() {
  */
 void program() {
   while(!at_eof()) {
+    if(!consume_kind(TK_INT)) error_at(token->str, "\"int\" expected");
     Token *tok = consume_ident();
     if(!tok) error("Function definition starts with identifier\n");
     Function *func = calloc(1, sizeof(Function));
