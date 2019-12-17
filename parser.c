@@ -22,6 +22,15 @@ bool consume_kind(TokenKind kind) {
   return false;
 }
 
+bool check_prefix() {
+  switch(token->kind) {
+    case TK_INT:
+      return true;
+    default:
+      return false;
+  }
+}
+
 Token *consume_ident() {
   if(token->kind != TK_IDENT) return NULL;
 
@@ -207,13 +216,30 @@ Node *expr() {
 }
 
 /*
+ * prefix = "int" "*"*
+ */
+Type *prefix() {
+  if(!consume_kind(TK_INT)) error_at(token->str, "keyword \"int\" expected");
+  Type *type = calloc(1, sizeof(Type));
+  type->ty = INT;
+  type->ptr_to = NULL;
+  while(consume("*")) {
+    Type *tmp = calloc(1, sizeof(Type));
+    tmp->ty = PTR;
+    tmp->ptr_to = type;
+    type = tmp;
+  }
+  return type;
+}
+
+/*
  * stmt = expr ";"
  *      | "return" expr ";"
  *      | "if" "(" expr ")" stmt ("else" stmt)?
  *      | "while" "(" expr ")" stmt
  *      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
  *      | "{" stmt* "}"
- *      | "int" ident ";"
+ *      | prefix ident ";"
  */
 Node *stmt() {
   Node *node;
@@ -231,38 +257,6 @@ Node *stmt() {
     cur->next = NULL;
     node->body = head.next;
     return node;
-  }
-
-  if(consume_kind(TK_INT)) {
-    Type *type = calloc(1, sizeof(Type));
-    type->ty = INT;
-    type->ptr_to = NULL;
-    while(consume("*")) {
-      Type *tmp = calloc(1, sizeof(Type));
-      tmp->ty = PTR;
-      tmp->ptr_to = type;
-      type = tmp;
-    }
-
-    Token *tok = consume_ident();
-    if(!tok) error_at(token->str, "Identifier expected");
-    LVar *lvar = find_lvar(tok);
-    if(lvar) error_at(tok->str, "Second declaration");
-    lvar = calloc(1, sizeof(LVar));
-    lvar->type = type;
-    lvar->next = nodes->func->locals;
-    nodes->func->locals = lvar;
-
-    lvar->name = tok->str;
-    lvar->len = tok->len;
-    lvar->offset = nodes->offset + 8;
-    nodes->offset = lvar->offset;
-
-    expect(";");
-
-    // XXX: { int x; } does not work
-    // should add new node type ND_DECLARE
-    return stmt();
   }
 
   if(consume_kind(TK_IF)) {
@@ -310,6 +304,29 @@ Node *stmt() {
     return node;
   }
 
+  if(check_prefix()) {
+    Type *type = prefix();
+    Token *tok = consume_ident();
+    if(!tok) error_at(token->str, "Identifier expected");
+    LVar *lvar = find_lvar(tok);
+    if(lvar) error_at(tok->str, "Second declaration");
+    lvar = calloc(1, sizeof(LVar));
+    lvar->type = type;
+    lvar->next = nodes->func->locals;
+    nodes->func->locals = lvar;
+
+    lvar->name = tok->str;
+    lvar->len = tok->len;
+    lvar->offset = nodes->offset + 8;
+    nodes->offset = lvar->offset;
+
+    expect(";");
+
+    // XXX: { int x; } does not work
+    // should add new node type ND_DECLARE
+    return stmt();
+  }
+
   if(consume_kind(TK_RETURN)) {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
@@ -318,13 +335,12 @@ Node *stmt() {
   else {
     node = expr();
   }
-
   expect(";");
   return node;
 }
 
 /*
- * program = ident "(" (ident ",")* ident? ")" block
+ * program = ident "(" (prefix ident ",")* (prefix ident)? ")" block
  */
 void program() {
   while(!at_eof()) {
@@ -347,12 +363,14 @@ void program() {
       LVar head = {.next = NULL};
       LVar *cur = &head;
       for(;;) {
+        Type *type = prefix();
         Token *tok = consume_ident();
         if(!tok) error("Identifier expected");
         LVar *lvar = calloc(1, sizeof(LVar));
         lvar->next = NULL;
         lvar->name = tok->str;
         lvar->len = tok->len;
+        lvar->type = type;
         lvar->offset = nodes->offset + 8;
         node->offset = lvar->offset;
         cur->next = lvar;
