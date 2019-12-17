@@ -7,10 +7,7 @@ void gen(Node *node);
 void gen_lval(Node *node) {
   switch(node->kind) {
     case ND_DEREF:
-      gen_lval(node->lhs);
-      printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
-      printf("  push rax\n");
+      gen(node->lhs);
       return;
     case ND_LVAR:
       printf("  mov rax, rbp\n");
