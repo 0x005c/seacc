@@ -67,9 +67,17 @@ struct Node {
   int val;
 };
 
+typedef struct Type Type;
+
+struct Type {
+  enum { INT, PTR } ty;
+  Type *ptr_to;
+};
+
 typedef struct LVar LVar;
 
 struct LVar {
+  Type *type;
   LVar *next;
   char *name;
   int len;

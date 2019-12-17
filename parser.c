@@ -234,11 +234,22 @@ Node *stmt() {
   }
 
   if(consume_kind(TK_INT)) {
+    Type *type = calloc(1, sizeof(Type));
+    type->ty = INT;
+    type->ptr_to = NULL;
+    while(consume("*")) {
+      Type *tmp = calloc(1, sizeof(Type));
+      tmp->ty = PTR;
+      tmp->ptr_to = type;
+      type = tmp;
+    }
+
     Token *tok = consume_ident();
     if(!tok) error_at(token->str, "Identifier expected");
     LVar *lvar = find_lvar(tok);
     if(lvar) error_at(tok->str, "Second declaration");
     lvar = calloc(1, sizeof(LVar));
+    lvar->type = type;
     lvar->next = nodes->func->locals;
     nodes->func->locals = lvar;
 
@@ -249,6 +260,8 @@ Node *stmt() {
 
     expect(";");
 
+    // XXX: { int x; } does not work
+    // should add new node type ND_DECLARE
     return stmt();
   }
 

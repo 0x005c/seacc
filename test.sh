@@ -79,5 +79,6 @@ try 10 'int main() {int x; x=0; if(x>1) return x; return x+10; }'
 
 # test pointer
 try 10 'int main() {int x; int y; x = 10; y = &x; return *y;}'
+try 3 'int main() { int x; int *y; y = &x; *y = 3; return x; }'
 
 echo OK
