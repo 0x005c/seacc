@@ -9,6 +9,7 @@ typedef enum {
   TK_WHILE,
   TK_FOR,
   TK_ELSE,
+  TK_SIZEOF,
   TK_NUM,
   TK_EOF,
 } TokenKind;
@@ -50,6 +51,8 @@ typedef struct Function Function;
 
 typedef struct Node Node;
 
+typedef struct LVar LVar;
+
 // TODO: clean up
 struct Node {
   NodeKind kind;
@@ -61,6 +64,7 @@ struct Node {
   Node *body;
   Node *elsebody;
 
+  LVar *lvar;
   Function *func;
 
   int offset;
@@ -74,8 +78,6 @@ struct Type {
   Type *ptr_to;
 };
 
-typedef struct LVar LVar;
-
 struct LVar {
   Type *type;
   LVar *next;
@@ -85,6 +87,7 @@ struct LVar {
 };
 
 struct Function {
+  Type *type;
   Function *next;
   Node *body;
   Node *args;

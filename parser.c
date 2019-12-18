@@ -5,6 +5,55 @@
 
 #include "seacc.h"
 
+int get_size(Type *type) {
+  switch(type->ty) {
+    case INT:
+    case PTR:
+      return 8;
+    default:
+      return -1;
+  }
+}
+
+Type anonymous_int = {.ty = INT};
+Type anonymous_ptr = {.ty = PTR};
+
+Type *larger_type(Type *a, Type *b) {
+  return a->ty > b->ty ? a : b;
+}
+
+Type *calc_type(Node *node) {
+  Type *l, *r;
+  switch(node->kind) {
+    case ND_ADD:
+    case ND_SUB:
+    case ND_MUL:
+    case ND_DIV:
+      l = calc_type(node->lhs);
+      r = calc_type(node->rhs);
+      return larger_type(l, r);
+    case ND_EQ:
+    case ND_NE:
+    case ND_LT:
+    case ND_LE:
+      return &anonymous_int;
+    case ND_LVAR:
+      return node->lvar->type;
+    case ND_ASSIGN:
+      return calc_type(node->lhs);
+    case ND_CALL:
+      return node->func->type;
+    case ND_ADDR:
+      return &anonymous_ptr;
+    case ND_NUM:
+      return &anonymous_int;
+    case ND_DEREF:
+      return node->lvar->type->ptr_to;
+    default:
+      return NULL;
+  }
+}
+
 bool consume(char *op) {
   if(token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
@@ -125,6 +174,7 @@ Node *primary() {
       LVar *lvar = find_lvar(tok);
       if(lvar) {
         node->offset = lvar->offset;
+        node->lvar = lvar;
       }
       else {
         error_at(tok->str, "Unexpected token");
@@ -141,6 +191,7 @@ Node *primary() {
  *       | "-"? primary
  *       | "*" unary
  *       | "&" unary
+ *       | "sizeof" unary
  */
 Node *unary() {
   if(consume("+"))
@@ -151,6 +202,8 @@ Node *unary() {
     return new_node(ND_DEREF, unary(), NULL);
   if(consume("&"))
     return new_node(ND_ADDR, unary(), NULL);
+  if(consume_kind(TK_SIZEOF))
+    return new_node_num(get_size(calc_type(unary())));
   return primary();
 }
 
@@ -317,7 +370,7 @@ Node *stmt() {
 
     lvar->name = tok->str;
     lvar->len = tok->len;
-    lvar->offset = nodes->offset + 8;
+    lvar->offset = nodes->offset + get_size(type);
     nodes->offset = lvar->offset;
 
     expect(";");
@@ -340,17 +393,18 @@ Node *stmt() {
 }
 
 /*
- * program = ident "(" (prefix ident ",")* (prefix ident)? ")" block
+ * program = prefix ident "(" (prefix ident ",")* (prefix ident)? ")" block
  */
 void program() {
   while(!at_eof()) {
-    if(!consume_kind(TK_INT)) error_at(token->str, "\"int\" expected");
+    Type *type = prefix();
     Token *tok = consume_ident();
     if(!tok) error("Function definition starts with identifier\n");
     Function *func = calloc(1, sizeof(Function));
     func->locals = NULL;
     func->name = tok->str;
     func->len = tok->len;
+    func->type = type;
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_DEFUN;
     node->func = func;
@@ -371,7 +425,7 @@ void program() {
         lvar->name = tok->str;
         lvar->len = tok->len;
         lvar->type = type;
-        lvar->offset = nodes->offset + 8;
+        lvar->offset = nodes->offset + get_size(type);
         node->offset = lvar->offset;
         cur->next = lvar;
         cur = cur->next;

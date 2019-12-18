@@ -81,4 +81,11 @@ try 10 'int main() {int x; x=0; if(x>1) return x; return x+10; }'
 try 10 'int main() {int x; int y; x = 10; y = &x; return *y;}'
 try 3 'int main() { int x; int *y; y = &x; *y = 3; return x; }'
 
+# test sizeof
+try 8 'int main() { int x; return sizeof(x); }'
+try 8 'int main() { int *****x; return sizeof(x); }'
+try 8 'int main() { return sizeof(8); }' # ILP64
+try 8 'int main() { return sizeof(2+5); }'
+try 8 'int main() { int x; int y; return sizeof(x+y); }'
+
 echo OK

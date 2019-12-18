@@ -15,7 +15,7 @@ void gen_lval(Node *node) {
       printf("  push rax\n");
       return;
     default:
-      error("代入の左辺値が変数ではありません");
+      error("代入の左辺が変数ではありません");
   }
 }
 
