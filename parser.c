@@ -16,14 +16,13 @@ int get_size(Type *type) {
 }
 
 Type anonymous_int = {.ty = INT};
-Type anonymous_ptr = {.ty = PTR};
 
 Type *larger_type(Type *a, Type *b) {
   return a->ty > b->ty ? a : b;
 }
 
 Type *calc_type(Node *node) {
-  Type *l, *r;
+  Type *l, *r, *type;
   switch(node->kind) {
     case ND_ADD:
     case ND_SUB:
@@ -42,15 +41,19 @@ Type *calc_type(Node *node) {
     case ND_ASSIGN:
       return calc_type(node->lhs);
     case ND_CALL:
-      return node->func->type;
+      // XXX: return type is redarded as int
+      return &anonymous_int;
     case ND_ADDR:
-      return &anonymous_ptr;
+      type = calloc(1, sizeof(Type));
+      type->ty = PTR;
+      type->ptr_to = calc_type(node->lhs);
+      return type;
     case ND_NUM:
       return &anonymous_int;
     case ND_DEREF:
       return node->lvar->type->ptr_to;
     default:
-      return NULL;
+      error("Cannot calculate type on compiliation");
   }
 }
 

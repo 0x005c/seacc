@@ -106,6 +106,7 @@ Token *tokenize(char *p);
 Node *expr();
 void program();
 
+Type *calc_type(Node *node);
 void gen(Node *node);
 
 Token *token;

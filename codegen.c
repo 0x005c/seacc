@@ -194,11 +194,28 @@ void gen(Node *node) {
   printf("  pop rdi\n");
   printf("  pop rax\n");
 
+  Type *lty, *rty;
   switch(node->kind) {
     case ND_ADD:
+      lty = calc_type(node->lhs);
+      rty = calc_type(node->rhs);
+      if(lty->ty == INT &&
+          rty->ty == PTR)
+        printf("  imul rax, 8\n");
+      else if(lty->ty == PTR &&
+          rty->ty == INT)
+        printf("  imul rdi, 8\n");
       printf("  add rax, rdi\n");
       break;
     case ND_SUB:
+      lty = calc_type(node->lhs);
+      rty = calc_type(node->rhs);
+      if(lty->ty == INT &&
+          rty->ty == PTR)
+        printf("  imul rax, 8\n");
+      else if(lty->ty == PTR &&
+          rty->ty == INT)
+        printf("  imul rdi, 8\n");
       printf("  sub rax, rdi\n");
       break;
     case ND_MUL:

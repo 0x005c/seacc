@@ -80,6 +80,7 @@ try 10 'int main() {int x; x=0; if(x>1) return x; return x+10; }'
 # test pointer
 try 10 'int main() {int x; int y; x = 10; y = &x; return *y;}'
 try 3 'int main() { int x; int *y; y = &x; *y = 3; return x; }'
+try 10 'int main() { int x; int y; x=10; y=20; int *z; z=&y; return *(z+1); }'
 
 # test sizeof
 try 8 'int main() { int x; return sizeof(x); }'
