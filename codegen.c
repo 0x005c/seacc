@@ -116,7 +116,7 @@ void gen(Node *node) {
     printf("%s:\n", fname);
 
     int offset = node->offset;
-    if(func->locals) offset += func->locals->offset;
+    if(func->args) offset += func->args->offset;
 
     // prologue
     printf("  push rbp\n");
@@ -162,6 +162,7 @@ void gen(Node *node) {
       return;
     case ND_LVAR:
       gen_lval(node);
+      if(node->lvar->type->ty == ARY) return;
       printf("  pop rax\n");
       printf("  mov rax, [rax]\n");
       printf("  push rax\n");
@@ -197,25 +198,9 @@ void gen(Node *node) {
   Type *lty, *rty;
   switch(node->kind) {
     case ND_ADD:
-      lty = calc_type(node->lhs);
-      rty = calc_type(node->rhs);
-      if(lty->ty == INT &&
-          rty->ty == PTR)
-        printf("  imul rax, 8\n");
-      else if(lty->ty == PTR &&
-          rty->ty == INT)
-        printf("  imul rdi, 8\n");
       printf("  add rax, rdi\n");
       break;
     case ND_SUB:
-      lty = calc_type(node->lhs);
-      rty = calc_type(node->rhs);
-      if(lty->ty == INT &&
-          rty->ty == PTR)
-        printf("  imul rax, 8\n");
-      else if(lty->ty == PTR &&
-          rty->ty == INT)
-        printf("  imul rdi, 8\n");
       printf("  sub rax, rdi\n");
       break;
     case ND_MUL:

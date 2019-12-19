@@ -10,9 +10,17 @@ int get_size(Type *type) {
     case INT:
     case PTR:
       return 8;
+    case ARY:
+      return type->size;
     default:
       return -1;
   }
+}
+
+bool ptr_like(Node *node) {
+  Type *t = calc_type(node);
+  if(t->ty == PTR || t->ty == ARY) return true;
+  return false;
 }
 
 Type anonymous_int = {.ty = INT};
@@ -51,9 +59,32 @@ Type *calc_type(Node *node) {
     case ND_NUM:
       return &anonymous_int;
     case ND_DEREF:
-      return node->lvar->type->ptr_to;
+      return calc_type(node->lhs)->ptr_to;
     default:
       error("Cannot calculate type on compiliation");
+  }
+}
+
+int compute_const_expr(Node *exp) {
+  switch(exp->kind) {
+    case ND_ADD:
+      return compute_const_expr(exp->lhs) + compute_const_expr(exp->rhs);
+    case ND_SUB:
+      return compute_const_expr(exp->lhs) - compute_const_expr(exp->rhs);
+    case ND_MUL:
+      return compute_const_expr(exp->lhs) * compute_const_expr(exp->rhs);
+    case ND_DIV:
+      return compute_const_expr(exp->lhs) / compute_const_expr(exp->rhs);
+    case ND_NUM:
+      return exp->val;
+    case ND_LVAR:
+    case ND_CALL:
+    case ND_DEREF:
+      error("Variable length array is not supported");
+    case ND_ASSIGN:
+      return compute_const_expr(exp->rhs);
+    default:
+      error("Unexpected node. Cannot compute expression value on compile");
   }
 }
 
@@ -226,10 +257,32 @@ Node *mul() {
 Node *add() {
   Node *node = mul();
   for(;;) {
-    if(consume("+"))
-      node = new_node(ND_ADD, node, mul());
-    else if(consume("-"))
-      node = new_node(ND_SUB, node, mul());
+    if(consume("+")) {
+      Node *rhs = mul();
+      bool lp = ptr_like(node);
+      bool rp = ptr_like(rhs);
+      if(lp && !rp)
+        rhs = new_node(ND_MUL, rhs, new_node_num(get_size(calc_type(node)->ptr_to)));
+      else if(!lp && rp)
+        node = new_node(ND_MUL, node, new_node_num(get_size(calc_type(rhs)->ptr_to)));
+      else if(lp && rp)
+        // NOTE: does this behaviour follow the standard?
+        error("[Compile error] cannot add pointer to pointer");
+      node = new_node(ND_ADD, node, rhs);
+    }
+    else if(consume("-")) {
+      Node *rhs = mul();
+      bool lp = ptr_like(node);
+      bool rp = ptr_like(rhs);
+      if(lp && !rp)
+        rhs = new_node(ND_MUL, rhs, new_node_num(get_size(calc_type(node)->ptr_to)));
+      else if(!lp && rp)
+        node = new_node(ND_MUL, node, new_node_num(get_size(calc_type(rhs)->ptr_to)));
+      else if(lp && rp)
+        // NOTE: does this behaviour follow the standard?
+        error("[Compile error] cannot add pointer to pointer");
+      node = new_node(ND_SUB, node, rhs);
+    }
     else return node;
   }
 }
@@ -295,7 +348,7 @@ Type *prefix() {
  *      | "while" "(" expr ")" stmt
  *      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
  *      | "{" stmt* "}"
- *      | prefix ident ";"
+ *      | prefix ident ("[" expr "]")* ";"
  */
 Node *stmt() {
   Node *node;
@@ -361,19 +414,27 @@ Node *stmt() {
   }
 
   if(check_prefix()) {
-    Type *type = prefix();
+    LVar *lvar = calloc(1, sizeof(LVar));
+    lvar->type = prefix();
     Token *tok = consume_ident();
     if(!tok) error_at(token->str, "Identifier expected");
-    LVar *lvar = find_lvar(tok);
-    if(lvar) error_at(tok->str, "Second declaration");
-    lvar = calloc(1, sizeof(LVar));
-    lvar->type = type;
+    if(find_lvar(tok)) error_at(tok->str, "Second declaration");
     lvar->next = nodes->func->locals;
-    nodes->func->locals = lvar;
-
     lvar->name = tok->str;
     lvar->len = tok->len;
-    lvar->offset = nodes->offset + get_size(type);
+    nodes->func->locals = lvar;
+
+    while(consume("[")) {
+      Type *tmp = calloc(1, sizeof(Type));
+      tmp->ty = ARY;
+      int count = compute_const_expr(expr());
+      tmp->size = get_size(lvar->type) * count;
+      tmp->ptr_to = lvar->type;
+      lvar->type = tmp;
+      expect("]");
+    }
+
+    lvar->offset = nodes->offset + get_size(lvar->type);
     nodes->offset = lvar->offset;
 
     expect(";");

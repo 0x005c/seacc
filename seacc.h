@@ -74,8 +74,9 @@ struct Node {
 typedef struct Type Type;
 
 struct Type {
-  enum { INT, PTR } ty;
+  enum { INT, PTR, ARY } ty;
   Type *ptr_to;
+  int size; // array size
 };
 
 struct LVar {
