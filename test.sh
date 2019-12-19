@@ -92,6 +92,7 @@ try 8 'int main() { int x; int y; return sizeof(x+y); }'
 # test array
 try 16 'int main() { int x[2]; return sizeof(x); }'
 try 12 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x+*(x+1)+*(x+2); }'
+try 12 'int main() { int x[3]; x[0]=3; x[1]=4; x[2]=5; return x[0]+x[1]+x[2]; }'
 try 72 'int main() { int x[3][3]; return sizeof(x); }'
 
 echo OK

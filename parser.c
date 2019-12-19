@@ -167,6 +167,7 @@ Node *new_node_num(int val) {
 /* primary = "(" expr ")"
  *         | ident "(" (expr ",")* expr? ")"
  *         | ident
+ *         | number
  */
 Node *primary() {
   if(consume("(")) {
@@ -221,24 +222,41 @@ Node *primary() {
 }
 
 /*
- * unary = "+"? primary
- *       | "-"? primary
+ * postfix = primary ("[" expr "]")*
+ */
+Node *postfix() {
+  Node *node = primary();
+  for(;;) {
+    if(consume("[")) {
+      node = new_node(ND_ADD, node, expr());
+      node = new_node(ND_DEREF, node, NULL);
+      expect("]");
+      continue;
+    }
+    return node;
+  }
+}
+
+/*
+ * unary = "+"? postfix
+ *       | "-"? postfix
  *       | "*" unary
  *       | "&" unary
  *       | "sizeof" unary
+ *       | postfix
  */
 Node *unary() {
   if(consume("+"))
-    return primary();
+    return postfix();
   if(consume("-"))
-    return new_node(ND_SUB, new_node_num(0), primary());
+    return new_node(ND_SUB, new_node_num(0), postfix());
   if(consume("*"))
     return new_node(ND_DEREF, unary(), NULL);
   if(consume("&"))
     return new_node(ND_ADDR, unary(), NULL);
   if(consume_kind(TK_SIZEOF))
     return new_node_num(get_size(calc_type(unary())));
-  return primary();
+  return postfix();
 }
 
 Node *mul() {
