@@ -24,6 +24,14 @@ void gen_lval(Node *node) {
     printf("  push rax\n");
     return;
   }
+  if(kind == ND_GVAR) {
+    Var *var = node->var;
+    char vname[var->len+1];
+    strncpy(vname, var->name, var->len);
+    vname[var->len] = '\0';
+    printf("  push %s@GOTPCREL[rip]\n", vname);
+    return;
+  }
   error("代入の左辺が変数ではありません");
 }
 
@@ -169,6 +177,7 @@ void gen(Node *node) {
       printf("  push %d\n", node->val);
       return;
     case ND_LVAR:
+    case ND_GVAR:
       gen_lval(node);
       if(node->var->type->ty == ARY) return;
       printf("  pop rax\n");
