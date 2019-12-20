@@ -35,6 +35,7 @@ typedef enum {
   ND_LT,
   ND_LE,
   ND_LVAR,
+  ND_GVAR,
   ND_ASSIGN,
   ND_RETURN,
   ND_IF,
@@ -51,7 +52,7 @@ typedef struct Function Function;
 
 typedef struct Node Node;
 
-typedef struct LVar LVar;
+typedef struct Var Var;
 
 // TODO: clean up
 struct Node {
@@ -64,7 +65,7 @@ struct Node {
   Node *body;
   Node *elsebody;
 
-  LVar *lvar;
+  Var *var;
   Function *func;
 
   int offset;
@@ -73,15 +74,17 @@ struct Node {
 
 typedef struct Type Type;
 
+typedef enum { INT, PTR, ARY } TType;
+
 struct Type {
-  enum { INT, PTR, ARY } ty;
+  TType ty;
   Type *ptr_to;
-  int size; // array size
+  int size; // always non-zero
 };
 
-struct LVar {
+struct Var {
   Type *type;
-  LVar *next;
+  Var *next;
   char *name;
   int len;
   int offset;
@@ -92,8 +95,8 @@ struct Function {
   Function *next;
   Node *body;
   Node *args;
-  LVar *locals;
-  LVar *params;
+  Var *locals;
+  Var *params;
   char *name;
   int len;
   int offset;
@@ -108,8 +111,10 @@ Node *expr();
 void program();
 
 Type *calc_type(Node *node);
+void gen_global(Var *var);
 void gen(Node *node);
 
 Token *token;
 char *user_input;
 Node *nodes;
+Var *global;

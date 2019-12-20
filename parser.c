@@ -5,15 +5,13 @@
 
 #include "seacc.h"
 
-int get_size(Type *type) {
-  switch(type->ty) {
+int ty_size(TType ty) {
+  switch(ty) {
     case INT:
     case PTR:
       return 8;
-    case ARY:
-      return type->size;
     default:
-      return -1;
+      error("cannot calculate type size");
   }
 }
 
@@ -23,10 +21,18 @@ bool ptr_like(Node *node) {
   return false;
 }
 
-Type anonymous_int = {.ty = INT};
+Type anonymous_int = {.ty = INT, .size = 8};
 
 Type *larger_type(Type *a, Type *b) {
   return a->ty > b->ty ? a : b;
+}
+
+Type *gen_type(TType ty, Type *ptr_to, int size) {
+  Type *type = calloc(1, sizeof(Type));
+  type->ty = ty;
+  type->ptr_to = ptr_to;
+  type->size = size;
+  return type;
 }
 
 Type *calc_type(Node *node) {
@@ -45,17 +51,14 @@ Type *calc_type(Node *node) {
     case ND_LE:
       return &anonymous_int;
     case ND_LVAR:
-      return node->lvar->type;
+      return node->var->type;
     case ND_ASSIGN:
       return calc_type(node->lhs);
     case ND_CALL:
       // XXX: return type is redarded as int
       return &anonymous_int;
     case ND_ADDR:
-      type = calloc(1, sizeof(Type));
-      type->ty = PTR;
-      type->ptr_to = calc_type(node->lhs);
-      return type;
+      return type = gen_type(PTR, calc_type(node->lhs), ty_size(PTR));
     case ND_NUM:
       return &anonymous_int;
     case ND_DEREF:
@@ -142,10 +145,35 @@ bool at_eof() {
   return token->kind == TK_EOF;
 }
 
-LVar *find_lvar(Token *tok) {
-  for(LVar *var = nodes->func->locals; var; var = var->next)
+Var *find_lvar(Token *tok) {
+  for(Var *var = nodes->func->locals; var; var = var->next)
     if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
       return var;
+  return NULL;
+}
+
+Var *find_gvar(Token *tok) {
+  for(Var *var = global; var; var = var->next)
+    if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+      return var;
+  return NULL;
+}
+
+Node *find_var(Token *tok) {
+  Node *node = calloc(1, sizeof(Node));
+  Var *var = find_lvar(tok);
+  if(var) {
+    node->kind = ND_LVAR;
+    node->var = var;
+    node->offset = var->offset;
+    return node;
+  }
+  var = find_gvar(tok);
+  if(var) {
+    node->kind = ND_GVAR;
+    node->var = var;
+    return node;
+  }
   return NULL;
 }
 
@@ -203,18 +231,9 @@ Node *primary() {
       return node;
     }
     else {
-      Node *node = calloc(1, sizeof(Node));
-      node->kind = ND_LVAR;
-
-      LVar *lvar = find_lvar(tok);
-      if(lvar) {
-        node->offset = lvar->offset;
-        node->lvar = lvar;
-      }
-      else {
-        error_at(tok->str, "Unexpected token");
-      }
-      return node;
+      Node *node = find_var(tok);
+      if(node) return node;
+      else error_at(tok->str, "Unexpected token");
     }
   }
 
@@ -255,7 +274,7 @@ Node *unary() {
   if(consume("&"))
     return new_node(ND_ADDR, unary(), NULL);
   if(consume_kind(TK_SIZEOF))
-    return new_node_num(get_size(calc_type(unary())));
+    return new_node_num(calc_type(unary())->size);
   return postfix();
 }
 
@@ -280,9 +299,9 @@ Node *add() {
       bool lp = ptr_like(node);
       bool rp = ptr_like(rhs);
       if(lp && !rp)
-        rhs = new_node(ND_MUL, rhs, new_node_num(get_size(calc_type(node)->ptr_to)));
+        rhs = new_node(ND_MUL, rhs, new_node_num(calc_type(node)->ptr_to->size));
       else if(!lp && rp)
-        node = new_node(ND_MUL, node, new_node_num(get_size(calc_type(rhs)->ptr_to)));
+        node = new_node(ND_MUL, node, new_node_num(calc_type(rhs)->ptr_to->size));
       else if(lp && rp)
         // NOTE: does this behaviour follow the standard?
         error("[Compile error] cannot add pointer to pointer");
@@ -293,9 +312,9 @@ Node *add() {
       bool lp = ptr_like(node);
       bool rp = ptr_like(rhs);
       if(lp && !rp)
-        rhs = new_node(ND_MUL, rhs, new_node_num(get_size(calc_type(node)->ptr_to)));
+        rhs = new_node(ND_MUL, rhs, new_node_num(calc_type(node)->ptr_to->size));
       else if(!lp && rp)
-        node = new_node(ND_MUL, node, new_node_num(get_size(calc_type(rhs)->ptr_to)));
+        node = new_node(ND_MUL, node, new_node_num(calc_type(rhs)->ptr_to->size));
       else if(lp && rp)
         // NOTE: does this behaviour follow the standard?
         error("[Compile error] cannot add pointer to pointer");
@@ -347,15 +366,8 @@ Node *expr() {
  */
 Type *prefix() {
   if(!consume_kind(TK_INT)) error_at(token->str, "keyword \"int\" expected");
-  Type *type = calloc(1, sizeof(Type));
-  type->ty = INT;
-  type->ptr_to = NULL;
-  while(consume("*")) {
-    Type *tmp = calloc(1, sizeof(Type));
-    tmp->ty = PTR;
-    tmp->ptr_to = type;
-    type = tmp;
-  }
+  Type *type = gen_type(INT, NULL, ty_size(INT));
+  while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;
 }
 
@@ -432,28 +444,25 @@ Node *stmt() {
   }
 
   if(check_prefix()) {
-    LVar *lvar = calloc(1, sizeof(LVar));
-    lvar->type = prefix();
+    Var *var = calloc(1, sizeof(Var));
+    var->type = prefix();
     Token *tok = consume_ident();
     if(!tok) error_at(token->str, "Identifier expected");
-    if(find_lvar(tok)) error_at(tok->str, "Second declaration");
-    lvar->next = nodes->func->locals;
-    lvar->name = tok->str;
-    lvar->len = tok->len;
-    nodes->func->locals = lvar;
+    if(find_var(tok)) error_at(tok->str, "Second declaration");
+    var->next = nodes->func->locals;
+    var->name = tok->str;
+    var->len = tok->len;
+    nodes->func->locals = var;
 
     while(consume("[")) {
-      Type *tmp = calloc(1, sizeof(Type));
-      tmp->ty = ARY;
-      int count = compute_const_expr(expr());
-      tmp->size = get_size(lvar->type) * count;
-      tmp->ptr_to = lvar->type;
-      lvar->type = tmp;
+      var->type = gen_type(ARY,
+          var->type,
+          var->type->size * compute_const_expr(expr()));
       expect("]");
     }
 
-    lvar->offset = nodes->offset + get_size(lvar->type);
-    nodes->offset = lvar->offset;
+    var->offset = nodes->offset + var->type->size;
+    nodes->offset = var->offset;
 
     expect(";");
 
@@ -482,42 +491,52 @@ void program() {
     Type *type = prefix();
     Token *tok = consume_ident();
     if(!tok) error("Function definition starts with identifier\n");
-    Function *func = calloc(1, sizeof(Function));
-    func->locals = NULL;
-    func->name = tok->str;
-    func->len = tok->len;
-    func->type = type;
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_DEFUN;
-    node->func = func;
-    node->next = nodes;
-    nodes = node;
-    expect("(");
-    if(consume(")"))
-      func->params = NULL;
-    else {
-      LVar head = {.next = NULL};
-      LVar *cur = &head;
-      for(;;) {
-        Type *type = prefix();
-        Token *tok = consume_ident();
-        if(!tok) error("Identifier expected");
-        LVar *lvar = calloc(1, sizeof(LVar));
-        lvar->next = NULL;
-        lvar->name = tok->str;
-        lvar->len = tok->len;
-        lvar->type = type;
-        lvar->offset = nodes->offset + get_size(type);
-        node->offset = lvar->offset;
-        cur->next = lvar;
-        cur = cur->next;
-        if(!consume(",")) break;
+    if(consume("(")) {
+      Function *func = calloc(1, sizeof(Function));
+      func->locals = NULL;
+      func->name = tok->str;
+      func->len = tok->len;
+      func->type = type;
+      Node *node = calloc(1, sizeof(Node));
+      node->kind = ND_DEFUN;
+      node->func = func;
+      node->next = nodes;
+      nodes = node;
+      if(consume(")"))
+        func->params = NULL;
+      else {
+        Var head = {.next = NULL};
+        Var *cur = &head;
+        for(;;) {
+          Type *type = prefix();
+          Token *tok = consume_ident();
+          if(!tok) error("Identifier expected");
+          Var *var = calloc(1, sizeof(Var));
+          var->next = NULL;
+          var->name = tok->str;
+          var->len = tok->len;
+          var->type = type;
+          var->offset = nodes->offset + type->size;
+          node->offset = var->offset;
+          cur->next = var;
+          cur = cur->next;
+          if(!consume(",")) break;
+        }
+        expect(")");
+        func->locals = head.next;
+        func->params = head.next;
       }
-      expect(")");
-      func->locals = head.next;
-      func->params = head.next;
+      func->body = stmt(); // XXX: allow only block
+      continue;
     }
-    func->body = stmt(); // XXX: allow only block
+    expect(";");
+    Var *var = calloc(1, sizeof(Var));
+    var->type = type;
+    var->next = global;
+    global = var;
+    var->name = tok->str;
+    var->len = tok->len;
+    continue;
   }
 }
 
