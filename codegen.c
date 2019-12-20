@@ -147,34 +147,6 @@ void gen(Node *node) {
     printf("  ret\n");
     return;
   }
-  if(node->kind == ND_GVAR) {
-    Var *var = node->var;
-    char vname[var->len+1];
-    strncpy(vname, var->name, var->len);
-    vname[var->len] = '\0';
-    printf("  push %s[rip]\n", vname);
-    return;
-  }
-  if(node->kind == ND_ASSIGN) {
-    if(node->lhs->kind == ND_GVAR) {
-      Var *var = node->lhs->var;
-      char vname[var->len+1];
-      strncpy(vname, var->name, var->len);
-      vname[var->len] = '\0';
-      gen(node->rhs);
-      printf("  pop rax\n");
-      printf("  mov %s[rip], rax\n", vname);
-      return;
-    }
-    gen_lval(node->lhs);
-    gen(node->rhs);
-
-    printf("  pop rdi\n");
-    printf("  pop rax\n");
-    printf("  mov [rax], rdi\n");
-    printf("  push rdi\n");
-    return;
-  }
 
   switch(node->kind) {
     case ND_IF:
@@ -202,6 +174,15 @@ void gen(Node *node) {
       printf("  pop rax\n");
       printf("  mov rax, [rax]\n");
       printf("  push rax\n");
+      return;
+    case ND_ASSIGN:
+      gen_lval(node->lhs);
+      gen(node->rhs);
+
+      printf("  pop rdi\n");
+      printf("  pop rax\n");
+      printf("  mov [rax], rdi\n");
+      printf("  push rdi\n");
       return;
     case ND_ADDR:
       gen_lval(node->lhs);
