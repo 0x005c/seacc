@@ -36,12 +36,6 @@ try 0 'int main() {return 123==456;}'
 try 0 'int main() {return 123!=123;}'
 try 1 'int main() {return 123!=456;}'
 
-# test variables
-try 10 'int main() {int x; x=10; return x;}'
-try 101 'int main() {int x; int y; x=100; y=1; return x+y;}'
-try 0 'int main() {int x; int y; x=y=1; return x-y;}'
-try 10 'int main() {int x; int y; x=100;x=200;y=0;y=y+10;return y;}'
-
 # test control flow
 ## if
 try 10 'int main() {if(1>0) return 10; else return 20;}'
@@ -94,5 +88,12 @@ try 16 'int main() { int x[2]; return sizeof(x); }'
 try 12 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x+*(x+1)+*(x+2); }'
 try 12 'int main() { int x[3]; x[0]=3; x[1]=4; x[2]=5; return x[0]+x[1]+x[2]; }'
 try 72 'int main() { int x[3][3]; return sizeof(x); }'
+
+# test variables
+try 10 'int main() {int x; x=10; return x;}'
+try 101 'int main() {int x; int y; x=100; y=1; return x+y;}'
+try 0 'int main() {int x; int y; x=y=1; return x-y;}'
+try 10 'int main() {int x; int y; x=100;x=200;y=0;y=y+10;return y;}'
+try 1 'int x; int main() { x=1; return x; }'
 
 echo OK
