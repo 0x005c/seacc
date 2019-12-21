@@ -2,6 +2,49 @@
 
 #include "seacc.h"
 
+#define SIZEOF(Node) (calc_type(Node)->size)
+#define REG_NODE(Kind) (reg(node, Kind))
+
+// (r|e)sp, (r|e)bp is excluded: always use rsp, rbp
+char reg_table[][6][4] = {
+  { "al", "dil", "sil",  "dl",  "cl",  "bl"},
+  { "ax",  "di",  "si",  "dx",  "cx",  "bx"},
+  {"eax", "edi", "esi", "edx", "ecx", "ebx"},
+  {"rax", "rdi", "rsi", "rdx", "rcx", "rbx"}};
+
+typedef enum {
+  RK_AX,
+  RK_DI,
+  RK_SI,
+  RK_DX,
+  RK_CX,
+  RK_BX,
+} RegKind;
+
+void any_reg_to_r_reg(char *reg, RegKind kind) {
+  if(strcmp(reg, reg_table[3][kind]) == 0) return;
+  printf("  movsx %s, %s\n", reg_table[3][kind], reg);
+  return;
+}
+
+char *reg(Node *node, RegKind kind) {
+  int size = SIZEOF(node);
+  if(size == 1) return reg_table[0][kind];
+  if(size == 2) return reg_table[1][kind];
+  if(size == 4) return reg_table[2][kind];
+  if(size == 8) return reg_table[3][kind];
+  return reg_table[3][kind];
+}
+
+char *psize(Node *node) {
+  int size = SIZEOF(node);
+  if(size == 1) return "BYTE PTR";
+  if(size == 2) return "WORD PTR";
+  if(size == 4) return "DWORD PTR";
+  if(size == 8) return "QWORD PTR";
+  return "QWORD PTR";
+}
+
 void gen(Node *node);
 
 void gen_global(Var *var) {
@@ -166,6 +209,7 @@ void gen(Node *node) {
     case ND_FOR:
       gen_for(node, label_id++);
       return;
+    // XXX: RETURN TYPE IS ALWAYS INT NOW
     case ND_RETURN:
       gen(node->lhs);
       printf("  pop rax\n");
@@ -181,7 +225,8 @@ void gen(Node *node) {
       gen_lval(node);
       if(node->var->type->ty == ARY) return;
       printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
+      printf("  mov %s, %s [rax]\n", REG_NODE(RK_AX), psize(node));
+      any_reg_to_r_reg(REG_NODE(RK_AX), RK_AX);
       printf("  push rax\n");
       return;
     case ND_ASSIGN:
@@ -190,8 +235,10 @@ void gen(Node *node) {
 
       printf("  pop rdi\n");
       printf("  pop rax\n");
-      printf("  mov [rax], rdi\n");
-      printf("  push rdi\n");
+      printf("  mov %s [rax], %s\n", psize(node), REG_NODE(RK_DI));
+      printf("  mov %s, %s\n", REG_NODE(RK_AX), REG_NODE(RK_DI));
+      any_reg_to_r_reg(REG_NODE(RK_AX), RK_AX);
+      printf("  push rax\n");
       return;
     case ND_ADDR:
       gen_lval(node->lhs);
@@ -199,7 +246,7 @@ void gen(Node *node) {
     case ND_DEREF:
       gen(node->lhs);
       printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
+      printf("  mov %s, %s [rax]\n", reg(node->lhs, RK_AX), psize(node->lhs));
       printf("  push rax\n");
       return;
     default:
@@ -212,42 +259,61 @@ void gen(Node *node) {
   printf("  pop rdi\n");
   printf("  pop rax\n");
 
-  Type *lty, *rty;
+  char *lreg = reg(node->lhs, RK_AX);
+  char *rreg = reg(node->rhs, RK_DI);
+
+  char *cqo = "  WRONG CQO\n";
+  switch(SIZEOF(node)) {
+    case 1:
+      cqo="  movsx ax, al\n  cqo\n";
+      break;
+    case 2:
+    case 4:
+    case 8:
+      cqo="  cqo\n";
+      break;
+    default:
+      break;
+  }
+
   switch(node->kind) {
     case ND_ADD:
-      printf("  add rax, rdi\n");
+      printf("  add %s, %s\n", lreg, rreg);
       break;
     case ND_SUB:
-      printf("  sub rax, rdi\n");
+      printf("  sub %s, %s\n", lreg, rreg);
       break;
     case ND_MUL:
+      any_reg_to_r_reg(lreg, RK_AX);
+      any_reg_to_r_reg(rreg, RK_DI);
       printf("  imul rax, rdi\n");
       break;
     case ND_DIV:
-      printf("  cqo\n");
-      printf("  idiv rdi\n");
+      printf("%s", cqo);
+      printf("  idiv %s\n", rreg);
       break;
     case ND_EQ:
-      printf("  cmp rax, rdi\n");
+      printf("  cmp %s, %s\n", lreg, rreg);
       printf("  sete al\n");
       printf("  movzb rax, al\n");
       break;
     case ND_NE:
-      printf("  cmp rax, rdi\n");
+      printf("  cmp %s, %s\n", lreg, rreg);
       printf("  setne al\n");
       printf("  movzb rax, al\n");
       break;
     case ND_LT:
-      printf("  cmp rax, rdi\n");
+      printf("  cmp %s, %s\n", lreg, rreg);
       printf("  setl al\n");
       printf("  movzb rax, al\n");
       break;
     case ND_LE:
-      printf("  cmp rax, rdi\n");
+      printf("  cmp %s, %s\n", lreg, rreg);
       printf("  setle al\n");
       printf("  movzb rax, al\n");
       break;
   }
+  any_reg_to_r_reg(lreg, RK_AX);
 
   printf("  push rax\n");
 }

@@ -102,4 +102,14 @@ try 12 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x+*(x+1)+*(x+2)
 try 12 'int main() { int x[3]; x[0]=3; x[1]=4; x[2]=5; return x[0]+x[1]+x[2]; }'
 try 72 'int main() { int x[3][3]; return sizeof(x); }'
 
+# test types
+try 123 'int main() { char c; c=123; return c; }'
+try 12 'int main() { int x; char c; x=24; c=2; return x/c; }'
+try 123 'int main() { int x; char c; x=1024+123; x=c=x; return x; }'
+try 100 'int main() { char a; char b; a=10; b=20; a=a+b; a=a-a; b=b*5; return b; }'
+try 5 'int main() { char a; char b; a=100; b=19; if(a>b) return a/b; }'
+try 1 'int main() { char c; return sizeof c; }'
+try 3 'char cs[3]; int main() { return sizeof(cs); }'
+# try 55 'char cs[4]; int main() { cs[3] = 55; return cs[3]; }'
+
 echo OK

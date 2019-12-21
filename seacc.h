@@ -4,6 +4,7 @@ typedef enum {
   TK_RESERVED,
   TK_IDENT,
   TK_INT,
+  TK_CHAR,
   TK_RETURN,
   TK_IF,
   TK_WHILE,
@@ -74,7 +75,8 @@ struct Node {
 
 typedef struct Type Type;
 
-typedef enum { INT, PTR, ARY } TType;
+// order is important: casted from left to right
+typedef enum { CHAR, INT, ARY, PTR } TType;
 
 struct Type {
   TType ty;
@@ -118,3 +120,4 @@ Token *token;
 char *user_input;
 Node *nodes;
 Var *global;
+Function *functions;

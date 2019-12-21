@@ -7,6 +7,8 @@
 
 int ty_size(TType ty) {
   switch(ty) {
+    case CHAR:
+      return 1;
     case INT:
     case PTR:
       return 8;
@@ -21,6 +23,7 @@ bool ptr_like(Node *node) {
   return false;
 }
 
+Type anonymous_char = {.ty = CHAR, .size = 1};
 Type anonymous_int = {.ty = INT, .size = 8};
 
 Type *larger_type(Type *a, Type *b) {
@@ -49,15 +52,14 @@ Type *calc_type(Node *node) {
     case ND_NE:
     case ND_LT:
     case ND_LE:
-      return &anonymous_int;
+      return &anonymous_char;
     case ND_LVAR:
     case ND_GVAR:
       return node->var->type;
     case ND_ASSIGN:
       return calc_type(node->lhs);
     case ND_CALL:
-      // XXX: return type is redarded as int
-      return &anonymous_int;
+      return node->func->type;
     case ND_ADDR:
       return type = gen_type(PTR, calc_type(node->lhs), ty_size(PTR));
     case ND_NUM:
@@ -112,6 +114,7 @@ bool consume_kind(TokenKind kind) {
 bool check_prefix() {
   switch(token->kind) {
     case TK_INT:
+    case TK_CHAR:
       return true;
     default:
       return false;
@@ -144,6 +147,13 @@ int expect_number() {
 
 bool at_eof() {
   return token->kind == TK_EOF;
+}
+
+Function *find_func(Token *tok) {
+  for(Function *func = functions; func; func = func->next)
+    if(func->len == tok->len && !memcmp(tok->str, func->name, func->len))
+      return func;
+  return NULL;
 }
 
 Var *find_lvar(Token *tok) {
@@ -208,9 +218,16 @@ Node *primary() {
   Token *tok = consume_ident();
   if(tok) {
     if(consume("(")) {
+      Function *fdef = find_func(tok);
       Function *func = calloc(1, sizeof(Function));
-      func->name = tok->str;
-      func->len = tok->len;
+      if(fdef) {
+        memcpy(func, fdef, sizeof(Function));
+      }
+      else {
+        func->name = tok->str;
+        func->len = tok->len;
+        func->type = &anonymous_int;
+      }
       if(consume(")")) func->args = NULL;
       else {
         Node head = {.next = NULL};
@@ -366,8 +383,10 @@ Node *expr() {
  * prefix = "int" "*"*
  */
 Type *prefix() {
-  if(!consume_kind(TK_INT)) error_at(token->str, "keyword \"int\" expected");
-  Type *type = gen_type(INT, NULL, ty_size(INT));
+  Type *type = NULL;
+  if(consume_kind(TK_INT)) type = gen_type(INT, NULL, ty_size(INT));
+  else if(consume_kind(TK_CHAR)) type = gen_type(CHAR, NULL, ty_size(CHAR));
+  else error_at(token->str, "type name expected");
   while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;
 }
@@ -529,6 +548,8 @@ void program() {
         func->params = head.next;
       }
       func->body = stmt(); // XXX: allow only block
+      func->next = functions;
+      functions = func;
       continue;
     }
     Var *var = calloc(1, sizeof(Var));

@@ -138,6 +138,12 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if(memcmp(p, "char", 4) == 0 && !is_alnum(p[4])) {
+      cur = new_token(TK_CHAR, cur, p, 4);
+      p += 4;
+      continue;
+    }
+
     if(is_alnum(*p)) {
       int len;
       for(len=0; is_alnum(*(p+len)); len++);
