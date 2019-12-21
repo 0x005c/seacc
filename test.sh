@@ -37,10 +37,17 @@ try 0 'int main() {return 123!=123;}'
 try 1 'int main() {return 123!=456;}'
 
 # test variables
+## local
 try 10 'int main() {int x; x=10; return x;}'
 try 101 'int main() {int x; int y; x=100; y=1; return x+y;}'
 try 0 'int main() {int x; int y; x=y=1; return x-y;}'
 try 10 'int main() {int x; int y; x=100;x=200;y=0;y=y+10;return y;}'
+## global
+try 1 'int x; int main() { x=1; return x; }'
+try 123 'int *x; int main() { int y; x=&y; *x=123; return y; }'
+try 22 'int x; int main() { int *y; y=&x; *y=22; return x; }'
+try 9 'int x[10]; int main() { int i; for(i=0; i<10; i=i+1) x[i]=i; return x[9]; }'
+try 12 'int x; int y; int main() { x=123; y=111; return -y+x; }'
 
 # test control flow
 ## if
@@ -94,10 +101,5 @@ try 16 'int main() { int x[2]; return sizeof(x); }'
 try 12 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x+*(x+1)+*(x+2); }'
 try 12 'int main() { int x[3]; x[0]=3; x[1]=4; x[2]=5; return x[0]+x[1]+x[2]; }'
 try 72 'int main() { int x[3][3]; return sizeof(x); }'
-try 1 'int x; int main() { x=1; return x; }'
-try 123 'int *x; int main() { int y; x=&y; *x=123; return y; }'
-try 22 'int x; int main() { int *y; y=&x; *y=22; return x; }'
-try 9 'int x[10]; int main() { int i; for(i=0; i<10; i=i+1) x[i]=i; return x[9]; }'
-try 12 'int x; int y; int main() { x=123; y=111; return -y+x; }'
 
 echo OK
