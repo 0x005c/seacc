@@ -51,6 +51,7 @@ Type *calc_type(Node *node) {
     case ND_LE:
       return &anonymous_int;
     case ND_LVAR:
+    case ND_GVAR:
       return node->var->type;
     case ND_ASSIGN:
       return calc_type(node->lhs);
@@ -485,6 +486,7 @@ Node *stmt() {
 
 /*
  * program = prefix ident "(" (prefix ident ",")* (prefix ident)? ")" block
+ *         | prefix ident ( "[" expr "]" )* ";"
  */
 void program() {
   while(!at_eof()) {
@@ -529,9 +531,15 @@ void program() {
       func->body = stmt(); // XXX: allow only block
       continue;
     }
-    expect(";");
     Var *var = calloc(1, sizeof(Var));
     var->type = type;
+    while(consume("[")) {
+      var->type = gen_type(ARY,
+          var->type,
+          var->type->size * compute_const_expr(expr()));
+      expect("]");
+    }
+    expect(";");
     var->next = global;
     global = var;
     var->name = tok->str;
