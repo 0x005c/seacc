@@ -109,7 +109,7 @@ try 123 'int main() { int x; char c; x=1024+123; x=c=x; return x; }'
 try 100 'int main() { char a; char b; a=10; b=20; a=a+b; a=a-a; b=b*5; return b; }'
 try 5 'int main() { char a; char b; a=100; b=19; if(a>b) return a/b; }'
 try 1 'int main() { char c; return sizeof c; }'
-try 3 'char cs[3]; int main() { return sizeof(cs); }'
-# try 55 'char cs[4]; int main() { cs[3] = 55; return cs[3]; }'
+try 3 'char txt[3]; int main() { return sizeof(txt); }'
+try 55 'char txt[4]; int main() { txt[3] = 55; return txt[3]; }'
 
 echo OK

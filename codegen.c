@@ -3,7 +3,8 @@
 #include "seacc.h"
 
 #define SIZEOF(Node) (calc_type(Node)->size)
-#define REG_NODE(Kind) (reg(node, Kind))
+#define REG_NODE(Node, Kind) (reg(SIZEOF(Node), Kind))
+#define PSIZE_NODE(Node) (psize(SIZEOF(Node)))
 
 // (r|e)sp, (r|e)bp is excluded: always use rsp, rbp
 char reg_table[][6][4] = {
@@ -27,22 +28,20 @@ void any_reg_to_r_reg(char *reg, RegKind kind) {
   return;
 }
 
-char *reg(Node *node, RegKind kind) {
-  int size = SIZEOF(node);
+char *reg(int size, RegKind kind) {
   if(size == 1) return reg_table[0][kind];
   if(size == 2) return reg_table[1][kind];
   if(size == 4) return reg_table[2][kind];
   if(size == 8) return reg_table[3][kind];
-  return reg_table[3][kind];
+  return "WRONG_REG";
 }
 
-char *psize(Node *node) {
-  int size = SIZEOF(node);
+char *psize(int size) {
   if(size == 1) return "BYTE PTR";
   if(size == 2) return "WORD PTR";
   if(size == 4) return "DWORD PTR";
   if(size == 8) return "QWORD PTR";
-  return "QWORD PTR";
+  return "WRONG PTR";
 }
 
 void gen(Node *node);
@@ -198,6 +197,17 @@ void gen(Node *node) {
     printf("  ret\n");
     return;
   }
+  if(node->kind == ND_DEREF) {
+    gen(node->lhs);
+    Type *type = calc_type(node->lhs);
+    int size;
+    if(type->ty == ARY) size = 8;
+    else size = type->size;
+    printf("  pop rax\n");
+    printf("  mov %s, %s [rax]\n", reg(size, RK_AX), psize(size));
+    printf("  push rax\n");
+    return;
+  }
 
   switch(node->kind) {
     case ND_IF:
@@ -225,8 +235,8 @@ void gen(Node *node) {
       gen_lval(node);
       if(node->var->type->ty == ARY) return;
       printf("  pop rax\n");
-      printf("  mov %s, %s [rax]\n", REG_NODE(RK_AX), psize(node));
-      any_reg_to_r_reg(REG_NODE(RK_AX), RK_AX);
+      printf("  mov %s, %s [rax]\n", REG_NODE(node, RK_AX), PSIZE_NODE(node));
+      any_reg_to_r_reg(REG_NODE(node, RK_AX), RK_AX);
       printf("  push rax\n");
       return;
     case ND_ASSIGN:
@@ -235,19 +245,13 @@ void gen(Node *node) {
 
       printf("  pop rdi\n");
       printf("  pop rax\n");
-      printf("  mov %s [rax], %s\n", psize(node), REG_NODE(RK_DI));
-      printf("  mov %s, %s\n", REG_NODE(RK_AX), REG_NODE(RK_DI));
-      any_reg_to_r_reg(REG_NODE(RK_AX), RK_AX);
+      printf("  mov %s [rax], %s\n", PSIZE_NODE(node), REG_NODE(node, RK_DI));
+      printf("  mov %s, %s\n", REG_NODE(node, RK_AX), REG_NODE(node, RK_DI));
+      any_reg_to_r_reg(REG_NODE(node, RK_AX), RK_AX);
       printf("  push rax\n");
       return;
     case ND_ADDR:
       gen_lval(node->lhs);
-      return;
-    case ND_DEREF:
-      gen(node->lhs);
-      printf("  pop rax\n");
-      printf("  mov %s, %s [rax]\n", reg(node->lhs, RK_AX), psize(node->lhs));
-      printf("  push rax\n");
       return;
     default:
       break;
@@ -259,8 +263,13 @@ void gen(Node *node) {
   printf("  pop rdi\n");
   printf("  pop rax\n");
 
-  char *lreg = reg(node->lhs, RK_AX);
-  char *rreg = reg(node->rhs, RK_DI);
+  Type *type = calc_type(node);
+  int size;
+  if(type->ty == ARY) size = 8;
+  else size = type->size;
+
+  char *lreg = reg(size, RK_AX);
+  char *rreg = reg(size, RK_DI);
 
   char *cqo = "  WRONG CQO\n";
   switch(SIZEOF(node)) {
