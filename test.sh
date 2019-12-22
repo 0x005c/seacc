@@ -42,12 +42,14 @@ try 10 'int main() {int x; x=10; return x;}'
 try 101 'int main() {int x; int y; x=100; y=1; return x+y;}'
 try 0 'int main() {int x; int y; x=y=1; return x-y;}'
 try 10 'int main() {int x; int y; x=100;x=200;y=0;y=y+10;return y;}'
+try 100 'int main() { int rax; rax=100; return rax; }'
 ## global
 try 1 'int x; int main() { x=1; return x; }'
 try 123 'int *x; int main() { int y; x=&y; *x=123; return y; }'
 try 22 'int x; int main() { int *y; y=&x; *y=22; return x; }'
 try 9 'int x[10]; int main() { int i; for(i=0; i<10; i=i+1) x[i]=i; return x[9]; }'
 try 12 'int x; int y; int main() { x=123; y=111; return -y+x; }'
+try 100 'int rax; int main() { rax=100; return rax; }'
 
 # test control flow
 ## if

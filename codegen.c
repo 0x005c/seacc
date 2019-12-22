@@ -50,7 +50,7 @@ void gen_global(Var *var) {
   char vname[var->len+1];
   strncpy(vname, var->name, var->len);
   vname[var->len] = '\0';
-  printf("%s:\n", vname);
+  printf("_%s:\n", vname);
   printf("  .zero %d\n", var->type->size);
 }
 
@@ -71,7 +71,7 @@ void gen_lval(Node *node) {
     char vname[var->len+1];
     strncpy(vname, var->name, var->len);
     vname[var->len] = '\0';
-    printf("  push %s@GOTPCREL[rip]\n", vname);
+    printf("  push _%s@GOTPCREL[rip]\n", vname);
     return;
   }
   error("代入の左辺が変数ではありません");
