@@ -185,7 +185,9 @@ void gen(Node *node) {
     Var *cur = func->params;
     for(int i=0; i<6; i++) {
       if(!cur) break;
-      printf("  mov [rbp-%d], %s\n", cur->offset, param_reg[i]);
+      int size = cur->type->size;
+      printf("  mov rax, %s\n", param_reg[i]);
+      printf("  mov %s [rbp-%d], %s\n", psize(cur->type->size), cur->offset, reg(size, RK_AX));
       cur = cur->next;
     }
 

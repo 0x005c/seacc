@@ -10,6 +10,7 @@ int ty_size(TType ty) {
     case CHAR:
       return 1;
     case INT:
+      return 4;
     case PTR:
       return 8;
     default:
@@ -24,7 +25,7 @@ bool ptr_like(Node *node) {
 }
 
 Type anonymous_char = {.ty = CHAR, .size = 1};
-Type anonymous_int = {.ty = INT, .size = 8};
+Type anonymous_int = {.ty = INT, .size = 4};
 
 Type *larger_type(Type *a, Type *b) {
   return a->ty > b->ty ? a : b;

@@ -87,22 +87,22 @@ try 8 'int fib(int x) { if(x<3) return 1; return fib(x-1) + fib(x-2); } int main
 try 10 'int main() {int x; x=0; if(x>1) return x; return x+10; }'
 
 # test pointer
-try 10 'int main() {int x; int y; x = 10; y = &x; return *y;}'
+try 10 'int main() {int x; int *y; x = 10; y = &x; return *y;}'
 try 3 'int main() { int x; int *y; y = &x; *y = 3; return x; }'
 try 10 'int main() { int x; int y; x=10; y=20; int *z; z=&y; return *(z+1); }'
 
 # test sizeof
-try 8 'int main() { int x; return sizeof(x); }'
+try 4 'int main() { int x; return sizeof(x); }'
 try 8 'int main() { int *****x; return sizeof(x); }'
-try 8 'int main() { return sizeof(8); }' # ILP64
-try 8 'int main() { return sizeof(2+5); }'
-try 8 'int main() { int x; int y; return sizeof(x+y); }'
+try 4 'int main() { return sizeof(8); }'
+try 4 'int main() { return sizeof(2+5); }'
+try 4 'int main() { int x; int y; return sizeof(x+y); }'
 
 # test array
-try 16 'int main() { int x[2]; return sizeof(x); }'
+try 8 'int main() { int x[2]; return sizeof(x); }'
 try 12 'int main() { int x[3]; *x=3; *(x+1)=4; *(x+2)=5; return *x+*(x+1)+*(x+2); }'
 try 12 'int main() { int x[3]; x[0]=3; x[1]=4; x[2]=5; return x[0]+x[1]+x[2]; }'
-try 72 'int main() { int x[3][3]; return sizeof(x); }'
+try 36 'int main() { int x[3][3]; return sizeof(x); }'
 
 # test types
 try 123 'int main() { char c; c=123; return c; }'
