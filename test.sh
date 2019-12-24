@@ -117,5 +117,8 @@ try 55 'char txt[4]; int main() { txt[3] = 55; return txt[3]; }'
 # test literals
 try 97 "int main() { return 'a'; }"
 try 1 "int main() { char c; char d; c='a'; d='A'; return ('f'-'a'+'A' == 'F'); }"
+try 123 "int main() { return '\\123'; }"
+try 7 "int main() { return '\\a' ; }"
+try 1 "int main() { return 'l' == '\\l'; }"
 
 echo OK

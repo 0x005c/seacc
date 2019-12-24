@@ -86,8 +86,47 @@ Token *tokenize(char *p) {
       continue;
     }
 
-    // TODO: detect escape
-    if(*p == '\'' && *(p+1)!='\0' && *(p+2)=='\'') {
+    if(*p == '\'') {
+      if(p[1] == '\\') {
+        int val=0;
+        if(p[2] == 'a') val = 0x07;
+        if(p[2] == 'b') val = 0x08;
+        if(p[2] == 'e') val = 0x1b;
+        if(p[2] == 'f') val = 0x0c;
+        if(p[2] == 'n') val = 0x0a;
+        if(p[2] == 'r') val = 0x0d;
+        if(p[2] == 't') val = 0x09;
+        if(p[2] == 'v') val = 0x0b;
+        if(p[2] == '\\') val = 0x5c;
+        if(p[2] == '\'') val = 0x27;
+        if(p[2] == '\"') val = 0x22;
+        if(p[2] == '\?') val = 0x3f;
+        if(val) {
+          if(p[3] != '\'') error_at(p+3, "\"'\" expected, but got %c", p[3]);
+          cur = new_token(TK_CHAR_LITERAL, cur, p, 4);
+          cur->val = val;
+          p+=4;
+          continue;
+        }
+        if(isdigit(p[2])) {
+          int digitlen = 0;
+          while(isdigit(*(p+digitlen))) {
+            digitlen++;
+          }
+          cur = new_token(TK_CHAR_LITERAL, cur, p, digitlen);
+          p+=2;
+          cur->val = strtol(p, &p, 10);
+          if(*p != '\'') error_at(p, "\"'\" expected, but got %c", *p);
+          p+=1;
+          continue;
+        }
+        // TODO: tokenize escape like '\x5c'
+        cur = new_token(TK_CHAR_LITERAL, cur, p, 4);
+        cur->val = p[2];
+        if(p[3] != '\'') error_at(p+3, "\"'\" expected, but got %c", p[3]);
+        p+=4;
+        continue;
+      }
       cur = new_token(TK_CHAR_LITERAL, cur, p, 3);
       cur->val = *(p+1);
       p+=3;
