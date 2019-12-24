@@ -3,6 +3,7 @@
 typedef enum {
   TK_RESERVED,
   TK_IDENT,
+  TK_CHAR_LITERAL,
   TK_INT,
   TK_CHAR,
   TK_RETURN,

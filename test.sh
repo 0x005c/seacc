@@ -114,4 +114,8 @@ try 1 'int main() { char c; return sizeof c; }'
 try 3 'char txt[3]; int main() { return sizeof(txt); }'
 try 55 'char txt[4]; int main() { txt[3] = 55; return txt[3]; }'
 
+# test literals
+try 97 "int main() { return 'a'; }"
+try 1 "int main() { char c; char d; c='a'; d='A'; return ('f'-'a'+'A' == 'F'); }"
+
 echo OK

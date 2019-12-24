@@ -139,7 +139,7 @@ void expect(char *op) {
 }
 
 int expect_number() {
-  if(token->kind != TK_NUM)
+  if(token->kind != TK_NUM && token->kind != TK_CHAR_LITERAL)
     error_at(token->str, "数ではありません");
   int val = token->val;
   token = token->next;

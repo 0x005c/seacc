@@ -86,6 +86,14 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    // TODO: detect escape
+    if(*p == '\'' && *(p+1)!='\0' && *(p+2)=='\'') {
+      cur = new_token(TK_CHAR_LITERAL, cur, p, 3);
+      cur->val = *(p+1);
+      p+=3;
+      continue;
+    }
+
     if(isdigit(*p)) {
       int digitlen = 0;
       while(isdigit(*(p+digitlen))) {
