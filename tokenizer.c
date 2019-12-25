@@ -21,6 +21,25 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   return tok;
 }
 
+StringLiteral *find_lit(char *str) {
+  return NULL;
+}
+
+StringLiteral *get_lit(char *str, int len) {
+  char *text = calloc(1, len+1);
+  strncpy(text, str, len);
+  text[len] = '\0';
+  StringLiteral *lit = find_lit(text);
+  if(lit) return lit;
+
+  lit = calloc(1, sizeof(StringLiteral));
+  lit->str = text;
+  lit->id = slit ? slit->id+1 : 0;
+  lit->next = slit;
+  slit = lit;
+  return lit;
+}
+
 Token *tokenize(char *p) {
   Token head;
   head.next = NULL;
@@ -83,6 +102,19 @@ Token *tokenize(char *p) {
     if(*p == '!' && *(p+1) == '=') {
       cur = new_token(TK_RESERVED, cur, p, 2);
       p += 2;
+      continue;
+    }
+
+    if(*p == '"') {
+      int i;
+      for(i=1; p[i]!='"'; i++) {
+        if(p[i] == '\0') error_at(p+i, "Reached end of file before closing '\"'");
+        if(p[i] == '"') break;
+      }
+      i++;
+      cur = new_token(TK_STRING_LITERAL, cur, p, i);
+      cur->lit = get_lit(p+1, i-2); // exclude first and last '"'
+      p=p+i;
       continue;
     }
 

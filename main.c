@@ -12,16 +12,20 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  user_input = argv[1];
-  token = tokenize(argv[1]);
+  slit = NULL;
   nodes = NULL;
   global = NULL;
   functions = NULL;
+
+  user_input = argv[1];
+  token = tokenize(argv[1]);
   program();
 
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
 
+  printf(".data\n");
+  for(StringLiteral *lit=slit; lit; lit=lit->next) gen_lit(lit);
   printf(".bss\n");
   for(Var *cur=global; cur; cur=cur->next) gen_global(cur);
   printf(".text\n");

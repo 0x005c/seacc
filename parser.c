@@ -256,6 +256,14 @@ Node *primary() {
     }
   }
 
+  if(token->kind == TK_STRING_LITERAL) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_STR;
+    node->id = token->lit->id;
+    token = token->next;
+    return node;
+  }
+
   return new_node_num(expect_number());
 }
 

@@ -4,6 +4,7 @@ typedef enum {
   TK_RESERVED,
   TK_IDENT,
   TK_CHAR_LITERAL,
+  TK_STRING_LITERAL,
   TK_INT,
   TK_CHAR,
   TK_RETURN,
@@ -17,11 +18,13 @@ typedef enum {
 } TokenKind;
 
 typedef struct Token Token;
+typedef struct StringLiteral StringLiteral;
 
 struct Token {
   TokenKind kind;
   Token *next;
   int val;
+  StringLiteral *lit;
   char *str;
   int len;
 };
@@ -32,6 +35,7 @@ typedef enum {
   ND_MUL,
   ND_DIV,
   ND_NUM,
+  ND_STR,
   ND_EQ,
   ND_NE,
   ND_LT,
@@ -72,6 +76,7 @@ struct Node {
 
   int offset;
   int val;
+  int id;
 };
 
 typedef struct Type Type;
@@ -105,6 +110,12 @@ struct Function {
   int offset;
 };
 
+struct StringLiteral {
+  char *str;
+  int id;
+  StringLiteral *next;
+};
+
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 
@@ -114,6 +125,7 @@ Node *expr();
 void program();
 
 Type *calc_type(Node *node);
+void gen_lit(StringLiteral *lit);
 void gen_global(Var *var);
 void gen(Node *node);
 
@@ -122,3 +134,4 @@ char *user_input;
 Node *nodes;
 Var *global;
 Function *functions;
+StringLiteral *slit;

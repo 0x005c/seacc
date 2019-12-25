@@ -46,6 +46,11 @@ char *psize(int size) {
 
 void gen(Node *node);
 
+void gen_lit(StringLiteral *lit) {
+  printf(".Lstr%d:\n", lit->id);
+  printf("  .string \"%s\"\n", lit->str);
+}
+
 void gen_global(Var *var) {
   char vname[var->len+1];
   strncpy(vname, var->name, var->len);
@@ -231,6 +236,9 @@ void gen(Node *node) {
       return;
     case ND_NUM:
       printf("  push %d\n", node->val);
+      return;
+    case ND_STR:
+      printf("  push .Lstr%d@GOTPCREL[rip]\n", node->id);
       return;
     case ND_LVAR:
     case ND_GVAR:
