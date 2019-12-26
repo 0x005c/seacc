@@ -166,7 +166,7 @@ void gen(Node *node) {
     }
 
     printf("  sub rsp, %d\n", padding);
-    printf("  call %s\n", fname);
+    printf("  call %s@PLT\n", fname);
     printf("  add rsp, %d\n", padding);
     printf("  push rax\n");
     return;
