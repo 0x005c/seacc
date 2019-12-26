@@ -273,7 +273,8 @@ void gen(Node *node) {
   printf("  pop rdi\n");
   printf("  pop rax\n");
 
-  Type *type = calc_type(node);
+  // TODO: see node->rhs
+  Type *type = calc_type(node->lhs);
   int size;
   if(type->ty == ARY) size = 8;
   else size = type->size;
