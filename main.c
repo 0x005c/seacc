@@ -17,8 +17,10 @@ int main(int argc, char *argv[]) {
   global = NULL;
   functions = NULL;
 
-  user_input = argv[1];
-  token = tokenize(argv[1]);
+  filename = argv[1];
+  char *code = read_file(filename);
+  user_input = code;
+  token = tokenize(code);
   program();
 
   printf(".intel_syntax noprefix\n");

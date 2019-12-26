@@ -119,6 +119,8 @@ struct StringLiteral {
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 
+char *read_file(char *path);
+
 Token *tokenize(char *p);
 
 Node *expr();
@@ -130,6 +132,7 @@ void gen_global(Var *var);
 void gen(Node *node);
 
 Token *token;
+char *filename;
 char *user_input;
 Node *nodes;
 Var *global;
