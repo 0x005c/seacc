@@ -53,4 +53,7 @@ int main() {
   assert_equal(x, 2);
 
   {}{{{{{}}}}}{}{}{{{{{}}}}}
+
+  return 0;
 }
+
