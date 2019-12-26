@@ -1,0 +1,45 @@
+int count;
+
+int assert_true(int result) {
+  if(result) {
+    count = count+1;
+    return 0;
+  }
+  else exit(count);
+}
+
+int assert_equal(int l, int r) {
+  assert_true(l==r);
+}
+
+int f() { return 20; }
+int g() { return f()*2; }
+int id(int x) { return x; }
+int many(int a, int b, int c, int d, int e, int f) {
+  return a+b+c+d+e+f;
+}
+
+int add(int x, int y) {
+  return x+y;
+}
+
+int fac(int x) {
+  if(x>0) return x*fac(x-1);
+  return 1;
+}
+
+int fib(int x) {
+  if(x<3) return 1;
+  return fib(x-1) + fib(x-2);
+}
+
+int main() {
+  assert_equal(f(), 20);
+  assert_equal(g(), 40);
+  assert_equal(add(10,20), 30);
+  assert_equal(id(id(id(id(id(5))))), 5);
+  assert_equal(many(1,2,3,4,5,6), 21);
+  assert_equal(fac(5), 120);
+  assert_equal(fib(6), 8);
+  return 0;
+}

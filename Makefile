@@ -8,7 +8,7 @@ seacc: $(OBJS)
 $(OBJS): seacc.h
 
 test: seacc
-	./test.sh
+	test/test.sh
 
 clean:
 	rm -f seacc *.o *.swp *.swo tmp*
