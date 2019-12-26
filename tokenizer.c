@@ -51,6 +51,28 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    // "//" comment out
+    if(strncmp(p, "//", 2) == 0) {
+      p+=2;
+      while(*p != '\n') p++;
+      continue;
+    }
+
+    // "/* */" comment out
+    if(p[0]=='/' && p[1]=='*') {
+      char *q=p;
+      p+=2;
+      for(;;) {
+        if(p[0]=='\0') error_at(q, "Comment is not closed");
+        if(p[0]=='*' && p[1]=='/') {
+          p=p+2;
+          break;
+        }
+        p++;
+      }
+      continue;
+    }
+
     if(*p == '+'
         || *p == '-'
         || *p == '*'
