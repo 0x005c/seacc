@@ -56,7 +56,8 @@ void gen_global(Var *var) {
   strncpy(vname, var->name, var->len);
   vname[var->len] = '\0';
   printf("_%s:\n", vname);
-  printf("  .zero %d\n", var->type->size);
+  if(var->initial) printf("  .long %ld\n", var->initial);
+  else printf("  .zero %d\n", var->type->size);
 }
 
 void gen_lval(Node *node) {

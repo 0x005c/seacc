@@ -569,7 +569,11 @@ void program() {
           var->type->size * compute_const_expr(expr()));
       expect("]");
     }
-    expect(";");
+    if(!consume(";")) {
+      expect("=");
+      var->initial = compute_const_expr(expr());
+      expect(";");
+    }
     var->next = global;
     global = var;
     var->name = tok->str;

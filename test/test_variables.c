@@ -1,8 +1,8 @@
 int count;
 
 int assert_true(int result) {
+  count = count+1;
   if(result) {
-    count = count+1;
     return 0;
   }
   else exit(count);
@@ -12,7 +12,13 @@ int assert_equal(int l, int r) {
   assert_true(l==r);
 }
 
-int a; int b; int *c; int d[123]; int rbx;
+int a=1;
+int b='z';
+int *c;
+// int *c=&a;
+int d[123];
+int rbx;
+
 int main() {
   int x; int y; int z[10]; int rax;
   x=10;
@@ -23,8 +29,8 @@ int main() {
   assert_equal(y, 10);
   rax=100;
   assert_equal(rax, 100);
-  a=1;
   assert_equal(a, 1);
+  assert_equal(b, 'z');
   a=123; b=111;
   assert_equal(-b+a, 12);
   c=&a;

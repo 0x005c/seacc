@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
   printf(".data\n");
   for(StringLiteral *lit=slit; lit; lit=lit->next) gen_lit(lit);
-  printf(".bss\n");
+  printf(".data\n");
   for(Var *cur=global; cur; cur=cur->next) gen_global(cur);
   printf(".text\n");
   for(Node *cur = nodes; cur; cur = cur->next) gen(cur);

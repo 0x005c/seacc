@@ -94,6 +94,7 @@ struct Var {
   Type *type;
   Var *next;
   char *name;
+  long initial;
   int len;
   int offset;
 };
