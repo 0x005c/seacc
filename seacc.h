@@ -42,7 +42,9 @@ typedef enum {
   ND_LE,
   ND_LVAR,
   ND_GVAR,
+  ND_INIT_ARRAY,
   ND_ASSIGN,
+  ND_INIT,
   ND_RETURN,
   ND_IF,
   ND_WHILE,
@@ -131,6 +133,7 @@ Type *calc_type(Node *node);
 void gen_lit(StringLiteral *lit);
 void gen_global(Var *var);
 void gen(Node *node);
+int compute_const_expr(Node *exp);
 
 Token *token;
 char *filename;

@@ -57,6 +57,7 @@ Type *calc_type(Node *node) {
     case ND_LVAR:
     case ND_GVAR:
       return node->var->type;
+    case ND_INIT:
     case ND_ASSIGN:
       return calc_type(node->lhs);
     case ND_CALL:
@@ -267,6 +268,34 @@ Node *primary() {
   return new_node_num(expect_number());
 }
 
+Node *new_node_add(Node *l, Node *r) {
+  bool lp = ptr_like(l);
+  bool rp = ptr_like(r);
+  if(lp && !rp)
+    r = new_node(ND_MUL, r, new_node_num(calc_type(l)->ptr_to->size));
+  else if(!lp && rp)
+    l = new_node(ND_MUL, l, new_node_num(calc_type(r)->ptr_to->size));
+  else if(lp && rp)
+    // NOTE: does this behaviour follow the standard?
+    error("[Compile error] cannot add pointer to pointer");
+  l = new_node(ND_ADD, l, r);
+  return l;
+}
+
+Node *new_node_sub(Node *l, Node *r) {
+  bool lp = ptr_like(l);
+  bool rp = ptr_like(r);
+  if(lp && !rp)
+    r = new_node(ND_MUL, r, new_node_num(calc_type(l)->ptr_to->size));
+  else if(!lp && rp)
+    l = new_node(ND_MUL, l, new_node_num(calc_type(r)->ptr_to->size));
+  else if(lp && rp)
+    // NOTE: does this behaviour follow the standard?
+    error("[Compile error] cannot add pointer to pointer");
+  l = new_node(ND_SUB, l, r);
+  return l;
+}
+
 /*
  * postfix = primary ("[" expr "]")*
  */
@@ -274,7 +303,7 @@ Node *postfix() {
   Node *node = primary();
   for(;;) {
     if(consume("[")) {
-      node = new_node(ND_ADD, node, expr());
+      node = new_node_add(node, expr());
       node = new_node(ND_DEREF, node, NULL);
       expect("]");
       continue;
@@ -321,32 +350,10 @@ Node *mul() {
 Node *add() {
   Node *node = mul();
   for(;;) {
-    if(consume("+")) {
-      Node *rhs = mul();
-      bool lp = ptr_like(node);
-      bool rp = ptr_like(rhs);
-      if(lp && !rp)
-        rhs = new_node(ND_MUL, rhs, new_node_num(calc_type(node)->ptr_to->size));
-      else if(!lp && rp)
-        node = new_node(ND_MUL, node, new_node_num(calc_type(rhs)->ptr_to->size));
-      else if(lp && rp)
-        // NOTE: does this behaviour follow the standard?
-        error("[Compile error] cannot add pointer to pointer");
-      node = new_node(ND_ADD, node, rhs);
-    }
-    else if(consume("-")) {
-      Node *rhs = mul();
-      bool lp = ptr_like(node);
-      bool rp = ptr_like(rhs);
-      if(lp && !rp)
-        rhs = new_node(ND_MUL, rhs, new_node_num(calc_type(node)->ptr_to->size));
-      else if(!lp && rp)
-        node = new_node(ND_MUL, node, new_node_num(calc_type(rhs)->ptr_to->size));
-      else if(lp && rp)
-        // NOTE: does this behaviour follow the standard?
-        error("[Compile error] cannot add pointer to pointer");
-      node = new_node(ND_SUB, node, rhs);
-    }
+    if(consume("+"))
+      node = new_node_add(node, mul());
+    else if(consume("-"))
+      node = new_node_sub(node, mul());
     else return node;
   }
 }
@@ -398,6 +405,33 @@ Type *prefix() {
   else error_at(token->str, "type name expected");
   while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;
+}
+
+/*
+ * initializer = "{" (initializer ",")* initializer ","? "}"
+ *             | expr
+ */
+Node *initializer() {
+  Node head = {.kind = ND_INIT_ARRAY, .lhs=NULL, .rhs=NULL};
+  Node *array = &head;
+  if(consume("{")) {
+    for(;;) {
+      array->rhs = new_node(ND_INIT_ARRAY, initializer(), NULL);
+      array=array->rhs;
+      if(consume(",")) {
+        if(consume("}")) break;
+        continue;
+      }
+      else {
+        expect("}");
+        break;
+      }
+    }
+    return head.rhs;
+  }
+  else {
+    return expr();
+  }
 }
 
 /*
@@ -498,12 +532,12 @@ Node *stmt() {
     if(consume(";")) return stmt();
 
     expect("=");
-    Node *exp = expr();
+    Node *exp = initializer();
     Node *lvar = calloc(1, sizeof(Node));
     lvar->kind = ND_LVAR;
     lvar->var = var;
     lvar->offset = var->offset;
-    Node *res = new_node(ND_ASSIGN, lvar, exp);
+    Node *res = new_node(ND_INIT, lvar, exp);
     expect(";");
     return res;
   }

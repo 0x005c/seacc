@@ -22,9 +22,10 @@ int rbx;
 int main() {
   int x=10;
   int y=1;
-  int z[10];
+  int z[10] = {1,3,5,7,9};
   int rax='z';
   assert_equal(x, 10);
+  assert_equal(z[2], 5);
   x=100;
   assert_equal(x+y, 101);
   y=0; y=y+10;

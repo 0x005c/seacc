@@ -6,7 +6,10 @@ try() {
     echo "$filename: compile failed"
     exit 1
   fi
-  gcc -o tmp tmp.s
+  if ! gcc -o tmp tmp.s ; then
+    echo "$filename: assemble failed"
+    exit 1
+  fi
   ./tmp
   result="$?"
 

@@ -130,6 +130,23 @@ void gen_for(Node *node, int id) {
   printf(".Lend%d:\n", id);
 }
 
+void gen_init_array(Node *node, int elem_size) {
+  printf("  pop rax\n");
+  printf("  push rax\n");
+  int count=0;
+  for(Node *cur=node; cur; cur=cur->rhs) {
+    gen(cur->lhs);
+    printf("  pop rdi\n");
+    printf("  pop rax\n");
+    printf("  mov %s [rax+%d], %s\n",
+        psize(elem_size), count*elem_size,
+        reg(elem_size, RK_DI));
+    count++;
+    printf("  push rax\n");
+  }
+  return;
+}
+
 int label_id = 0;
 
 void gen(Node *node) {
@@ -207,7 +224,7 @@ void gen(Node *node) {
   }
   if(node->kind == ND_DEREF) {
     gen(node->lhs);
-    Type *type = calc_type(node->lhs);
+    Type *type = calc_type(node->lhs)->ptr_to;
     int size;
     if(type->ty == ARY) size = 8;
     else size = type->size;
@@ -250,8 +267,13 @@ void gen(Node *node) {
       any_reg_to_r_reg(REG_NODE(node, RK_AX), RK_AX);
       printf("  push rax\n");
       return;
+    case ND_INIT:
     case ND_ASSIGN:
       gen_lval(node->lhs);
+      if(node->rhs->kind == ND_INIT_ARRAY) {
+        gen_init_array(node->rhs, calc_type(node->lhs)->ptr_to->size);
+        return;
+      }
       gen(node->rhs);
 
       printf("  pop rdi\n");
