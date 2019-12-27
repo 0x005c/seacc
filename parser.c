@@ -493,11 +493,19 @@ Node *stmt() {
     var->offset = nodes->offset + var->type->size;
     nodes->offset = var->offset;
 
-    expect(";");
-
     // XXX: { int x; } does not work
     // should add new node type ND_DECLARE
-    return stmt();
+    if(consume(";")) return stmt();
+
+    expect("=");
+    Node *exp = expr();
+    Node *lvar = calloc(1, sizeof(Node));
+    lvar->kind = ND_LVAR;
+    lvar->var = var;
+    lvar->offset = var->offset;
+    Node *res = new_node(ND_ASSIGN, lvar, exp);
+    expect(";");
+    return res;
   }
 
   if(consume_kind(TK_RETURN)) {

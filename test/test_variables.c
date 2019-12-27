@@ -20,13 +20,16 @@ int d[123];
 int rbx;
 
 int main() {
-  int x; int y; int z[10]; int rax;
-  x=10;
+  int x=10;
+  int y=1;
+  int z[10];
+  int rax='z';
   assert_equal(x, 10);
-  x=100; y=1;
+  x=100;
   assert_equal(x+y, 101);
   y=0; y=y+10;
   assert_equal(y, 10);
+  assert_equal(rax, 'z');
   rax=100;
   assert_equal(rax, 100);
   assert_equal(a, 1);
