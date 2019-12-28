@@ -42,7 +42,7 @@ int main() {
   assert_equal(a, 123);
   *z = a;
   assert_equal(*z, a);
-  for(y=0; y<10; y=y+1) z[y]=y;
+  for(y=0; y<10; ++y) z[y]=y;
   assert_equal(z[9], 9);
   rbx=100;
   assert_equal(rbx, 100);

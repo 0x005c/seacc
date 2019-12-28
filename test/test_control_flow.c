@@ -1,7 +1,7 @@
 int count = 0;
 
 int assert_true(int result) {
-  count = count+1;
+  count = ++count;
   if(result) {
     return 0;
   }
@@ -14,7 +14,7 @@ int assert_equal(int l, int r) {
 
 int f() {
   int y=0;
-  while(y<10) y=y+1;
+  while(y<10) ++y;
   return y;
 }
 
@@ -37,7 +37,7 @@ int main() {
   assert_equal(x, 10);
 
   x=0;
-  while(x<10) x=x+1;
+  while(x<10) ++x;
   assert_equal(x, 10);
 
   while(0) assert_true(1);

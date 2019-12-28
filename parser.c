@@ -318,6 +318,8 @@ Node *postfix() {
  *       | "-"? postfix
  *       | "*" unary
  *       | "&" unary
+ *       | "++" unary
+ *       | "--" unary
  *       | "sizeof" unary
  *       | postfix
  */
@@ -330,6 +332,16 @@ Node *unary() {
     return new_node(ND_DEREF, unary(), NULL);
   if(consume("&"))
     return new_node(ND_ADDR, unary(), NULL);
+  if(consume("++")) {
+    Node *node = unary();
+    return new_node(ND_ASSIGN, node,
+        new_node_add(node, new_node_num(1)));
+  }
+  if(consume("--")) {
+    Node *node = unary();
+    return new_node(ND_ASSIGN, node,
+        new_node_sub(node, new_node_num(1)));
+  }
   if(consume_kind(TK_SIZEOF))
     return new_node_num(calc_type(unary())->size);
   return postfix();
