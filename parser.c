@@ -68,6 +68,8 @@ Type *calc_type(Node *node) {
       return &anonymous_int;
     case ND_DEREF:
       return calc_type(node->lhs)->ptr_to;
+    case ND_DOT:
+      return calc_type(node->lhs)->struct_union->declarators->type;
     default:
       error("Cannot calculate type on compiliation");
   }
@@ -113,7 +115,7 @@ bool consume_kind(TokenKind kind) {
   return false;
 }
 
-bool check_prefix() {
+bool check_specifier() {
   switch(token->kind) {
     case TK_INT:
     case TK_CHAR:
@@ -297,6 +299,12 @@ Node *new_node_sub(Node *l, Node *r) {
   return l;
 }
 
+Node *new_node_name(Token *tok) {
+  Node *node = new_node(ND_NAME, NULL, NULL);
+  node->token = tok;
+  return node;
+}
+
 /*
  * postfix = primary ("[" expr "]")*
  */
@@ -308,6 +316,13 @@ Node *postfix() {
       node = new_node(ND_DEREF, node, NULL);
       expect("]");
       continue;
+    }
+    if(consume(".")) {
+      Token *tok = consume_ident();
+      if(tok) {
+        node = new_node(ND_DOT, node, new_node_name(tok));
+      }
+      else error("identifier expected");
     }
     return node;
   }
@@ -408,13 +423,52 @@ Node *expr() {
   return assign();
 }
 
+Type *specifier();
 /*
- * prefix = "int" "*"*
+ * struct_union = ident "{" specifier ident ";" "}"
  */
-Type *prefix() {
+Type *structunion(TokenKind kind) {
+  Token *tok = consume_ident();
+  if(tok) {
+    expect("{");
+    Type *type = calloc(1, sizeof(Type));
+    type->ty = STRUCT;
+
+    StructUnion *struct_union = calloc(1, sizeof(StructUnion));
+    type->struct_union = struct_union;
+    struct_union->name = tok->str;
+    struct_union->len  = tok->len;
+
+    Type *ty = specifier();
+
+    Token *vtok = consume_ident();
+    Var *var = calloc(1, sizeof(Var));
+    struct_union->declarators = var;
+    var->type = ty;
+    var->name = vtok->str;
+    var->len  = vtok->len;
+
+    type->size = ty->size; // sum of all elements
+
+    expect(";");
+    expect("}");
+
+    struct_union->next = structs;
+    structs = struct_union;
+
+    return type;
+  }
+  else error_at(token->str, "anonymous struct is unimplemented");
+}
+
+/*
+ * specifier = ("int"|"char"|("struct"|"union") struct_union) "*"*
+ */
+Type *specifier() {
   Type *type = NULL;
   if(consume_kind(TK_INT)) type = gen_type(INT, NULL, ty_size(INT));
   else if(consume_kind(TK_CHAR)) type = gen_type(CHAR, NULL, ty_size(CHAR));
+  else if(consume_kind(TK_STRUCT)) type = structunion(TK_STRUCT);
   else error_at(token->str, "type name expected");
   while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;
@@ -454,7 +508,7 @@ Node *initializer() {
  *      | "while" "(" expr ")" stmt
  *      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
  *      | "{" stmt* "}"
- *      | prefix ident ("[" expr "]")* ";"
+ *      | specifier ident ("[" expr "]")* ";"
  */
 Node *stmt() {
   Node *node;
@@ -519,9 +573,9 @@ Node *stmt() {
     return node;
   }
 
-  if(check_prefix()) {
+  if(check_specifier()) {
     Var *var = calloc(1, sizeof(Var));
-    var->type = prefix();
+    var->type = specifier();
     Token *tok = consume_ident();
     if(!tok) error_at(token->str, "Identifier expected");
     if(find_var(tok)) error_at(tok->str, "Second declaration");
@@ -568,12 +622,12 @@ Node *stmt() {
 }
 
 /*
- * program = prefix ident "(" (prefix ident ",")* (prefix ident)? ")" block
- *         | prefix ident ( "[" expr "]" )* ";"
+ * program = specifier ident "(" (specifier ident ",")* (specifier ident)? ")" block
+ *         | specifier ident ( "[" expr "]" )* ";"
  */
 void program() {
   while(!at_eof()) {
-    Type *type = prefix();
+    Type *type = specifier();
     Token *tok = consume_ident();
     if(!tok) error("Function definition starts with identifier\n");
     if(consume("(")) {
@@ -593,7 +647,7 @@ void program() {
         Var head = {.next = NULL};
         Var *cur = &head;
         for(;;) {
-          Type *type = prefix();
+          Type *type = specifier();
           Token *tok = consume_ident();
           if(!tok) error("Identifier expected");
           Var *var = calloc(1, sizeof(Var));

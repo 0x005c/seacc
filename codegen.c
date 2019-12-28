@@ -80,6 +80,10 @@ void gen_lval(Node *node) {
     printf("  push _%s@GOTPCREL[rip]\n", vname);
     return;
   }
+  if(node->kind == ND_DOT) {
+    gen_lval(node->lhs);
+    return;
+  }
   error("代入の左辺が変数ではありません");
 }
 
@@ -230,6 +234,16 @@ void gen(Node *node) {
     else size = type->size;
     printf("  pop rax\n");
     printf("  mov %s, %s [rax]\n", reg(size, RK_AX), psize(size));
+    printf("  push rax\n");
+    return;
+  }
+
+
+  if(node->kind == ND_DOT) {
+    gen_lval(node);
+    printf("  pop rax\n");
+    printf("  add rax, %d\n", node->lhs->offset);
+    printf("  mov %s, %s [rax]\n", REG_NODE(node->lhs, RK_AX), psize(SIZEOF(node)));
     printf("  push rax\n");
     return;
   }

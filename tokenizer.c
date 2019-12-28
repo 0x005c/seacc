@@ -81,6 +81,7 @@ Token *tokenize(char *p) {
         || *p == '}'
         || *p == ';'
         || *p == ','
+        || *p == '.'
         || *p == '&'
         || *p == '['
         || *p == ']') {
@@ -248,6 +249,12 @@ Token *tokenize(char *p) {
     if(memcmp(p, "int", 3) == 0 && !is_alnum(p[3])) {
       cur = new_token(TK_INT, cur, p, 3);
       p += 3;
+      continue;
+    }
+
+    if(memcmp(p, "struct", 6) == 0 && !is_alnum(p[6])) {
+      cur = new_token(TK_STRUCT, cur, p, 6);
+      p += 6;
       continue;
     }
 

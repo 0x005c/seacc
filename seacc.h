@@ -7,6 +7,7 @@ typedef enum {
   TK_STRING_LITERAL,
   TK_INT,
   TK_CHAR,
+  TK_STRUCT,
   TK_RETURN,
   TK_IF,
   TK_WHILE,
@@ -19,6 +20,7 @@ typedef enum {
 
 typedef struct Token Token;
 typedef struct StringLiteral StringLiteral;
+typedef struct StructUnion StructUnion;
 
 struct Token {
   TokenKind kind;
@@ -35,6 +37,7 @@ typedef enum {
   ND_MUL,
   ND_DIV,
   ND_NUM,
+  ND_STRUCT,
   ND_STR,
   ND_EQ,
   ND_NE,
@@ -54,6 +57,9 @@ typedef enum {
   ND_DEFUN,
   ND_ADDR,
   ND_DEREF,
+  ND_DOT,
+  ND_ARROW,
+  ND_NAME,
 } NodeKind;
 
 typedef struct Function Function;
@@ -65,6 +71,7 @@ typedef struct Var Var;
 // TODO: clean up
 struct Node {
   NodeKind kind;
+  Token *token;
   Node *next;
 
   Node *lhs;
@@ -84,11 +91,12 @@ struct Node {
 typedef struct Type Type;
 
 // order is important: casted from left to right
-typedef enum { CHAR, INT, ARY, PTR } TType;
+typedef enum { STRUCT, /* <- cannot cast */ CHAR, INT, ARY, PTR } TType;
 
 struct Type {
   TType ty;
   Type *ptr_to;
+  StructUnion *struct_union;
   int size; // always non-zero
 };
 
@@ -119,6 +127,15 @@ struct StringLiteral {
   StringLiteral *next;
 };
 
+struct StructUnion {
+  Var *declarators;
+
+  char *name;
+  int len; // length of name
+
+  StructUnion *next;
+};
+
 void error_at(char *loc, char *fmt, ...);
 void error(char *fmt, ...);
 
@@ -142,3 +159,5 @@ Node *nodes;
 Var *global;
 Function *functions;
 StringLiteral *slit;
+StructUnion *structs;
+StructUnion *unions;
