@@ -1,8 +1,8 @@
-int count;
+int count = 0;
 
 int assert_true(int result) {
+  count = count+1;
   if(result) {
-    count = count+1;
     return 0;
   }
   else exit(count);
@@ -13,7 +13,6 @@ int assert_equal(int l, int r) {
 }
 
 int main() {
-  count = 1;
   assert_equal(0, 0);
   // FIXME: assert_equal(-42, -42);
   assert_equal(42, 42);

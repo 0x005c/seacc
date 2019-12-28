@@ -1,8 +1,8 @@
-int count;
+int count = 0;
 
 int assert_true(int result) {
+  count = count+1;
   if(result) {
-    count = count+1;
     return 0;
   }
   else exit(count);
@@ -22,8 +22,7 @@ int main() {
   assert_equal(sizeof(x+y), 8);
   assert_equal(sizeof(x+*************y), 4);
 
-  char c;
-  c=123;
+  char c = 123;
   assert_equal(c, 123);
 
   x=24; c=2;
@@ -33,8 +32,7 @@ int main() {
   x=c=x;
   assert_equal(x, 123);
 
-  char b;
-  b=1;
+  char b = 1;
   c=10;
   assert_equal(c*b/b+b-b, 10);
 

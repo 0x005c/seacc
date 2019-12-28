@@ -1,8 +1,8 @@
-int count;
+int count = 0;
 
 int assert_true(int result) {
+  count = count+1;
   if(result) {
-    count = count+1;
     return 0;
   }
   else exit(count);
@@ -13,15 +13,14 @@ int assert_equal(int l, int r) {
 }
 
 int f() {
-  int y;
-  for(y=0; y<10; y=y+1) 1;
+  int y=0;
+  while(y<10) y=y+1;
   return y;
 }
 
 int main() {
-  int x;
+  int x = 0;
 
-  x=0;
   if(1>0) x=1;
   assert_true(x);
 
@@ -52,6 +51,7 @@ int main() {
   }
   assert_equal(x, 2);
 
+  // FIXME: for(x=0; x<10; x=x+1); assert_equal(x, 10);
   {}{{{{{}}}}}{}{}{{{{{}}}}}
 
   return 0;

@@ -1,4 +1,4 @@
-int count;
+int count = 0;
 
 int assert_true(int result) {
   count = count+1;

@@ -1,8 +1,8 @@
-int count;
+int count = 0;
 
 int assert_true(int result) {
+  count = count+1;
   if(result) {
-    count = count+1;
     return 0;
   }
   else exit(count);
