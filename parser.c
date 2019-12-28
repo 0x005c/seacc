@@ -209,6 +209,7 @@ Node *new_node_num(int val) {
  *         | ident "(" (expr ",")* expr? ")"
  *         | ident
  *         | number
+ *         | string_literal
  */
 Node *primary() {
   if(consume("(")) {
