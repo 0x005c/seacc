@@ -300,8 +300,47 @@ void gen(Node *node) {
         gen_init_array(node->rhs, calc_type(node->lhs)->ptr_to->size);
         return;
       }
-      gen(node->rhs);
 
+      Type *ltype = calc_type(node->lhs);
+      // TODO: need more strict struct comparation
+      if(ltype->ty == STRUCT && ltype->size == calc_type(node->rhs)->size) {
+        gen_lval(node->rhs);
+        int offset = 0;
+        printf("  pop rdi\n");
+        printf("  pop rax\n");
+        for(;;) {
+          int diff = ltype->size - offset;
+          if(diff >= 8) {
+            printf("  mov rcx, QWORD PTR [rdi+%d]\n", offset);
+            printf("  mov QWORD PTR [rax+%d], rcx\n", offset);
+            offset += 8;
+            continue;
+          }
+          if(diff >= 4) {
+            printf("  mov ecx, DWORD PTR [rdi+%d]\n", offset);
+            printf("  mov DWORD PTR [rax+%d], ecx\n", offset);
+            offset += 4;
+            continue;
+          }
+          if(diff >= 2) {
+            printf("  mov cx, WORD PTR [rdi+%d]\n", offset);
+            printf("  mov WORD PTR [rax+%d], cx\n", offset);
+            offset += 2;
+            continue;
+          }
+          if(diff == 1) {
+            printf("  mov cl, BYTE PTR [rdi+%d]\n", offset);
+            printf("  mov BYTE PTR [rax+%d], cl\n", offset);
+            offset += 1;
+            break;
+          }
+          break;
+        }
+        printf("  push rax\n");
+        return;
+      }
+
+      gen(node->rhs);
       printf("  pop rdi\n");
       printf("  pop rax\n");
       printf("  mov %s [rax], %s\n", PSIZE_NODE(node), REG_NODE(node, RK_DI));
