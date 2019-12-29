@@ -16,10 +16,13 @@ struct Struct { int data; } s;
 struct Struct t;
 
 int main() {
+  struct Struct u;
   s.data = 123;
   assert_equal(s.data, 123);
   t = s;
   assert_equal(t.data, 123);
+  u = t;
+  assert_equal(u.data, 123);
   return 0;
 }
 

@@ -119,6 +119,7 @@ bool check_specifier() {
   switch(token->kind) {
     case TK_INT:
     case TK_CHAR:
+    case TK_STRUCT:
       return true;
     default:
       return false;
