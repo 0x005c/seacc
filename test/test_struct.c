@@ -13,10 +13,13 @@ int assert_equal(int l, int r) {
 }
 
 struct Struct { int data; } s;
+struct Struct t;
 
 int main() {
   s.data = 123;
   assert_equal(s.data, 123);
+  t = s;
+  assert_equal(t.data, 123);
   return 0;
 }
 

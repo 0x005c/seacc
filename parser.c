@@ -192,6 +192,13 @@ Node *find_var(Token *tok) {
   return NULL;
 }
 
+StructUnion *find_struct_union(Token *tok) {
+  for(StructUnion *su = structs; su; su = su->next)
+    if(su->len == tok->len && !memcmp(tok->str, su->name, su->len))
+      return su;
+  return NULL;
+}
+
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -426,37 +433,47 @@ Node *expr() {
 Type *specifier();
 /*
  * struct_union = ident "{" specifier ident ";" "}"
+ *              | ident
  */
 Type *structunion(TokenKind kind) {
   Token *tok = consume_ident();
   if(tok) {
-    expect("{");
     Type *type = calloc(1, sizeof(Type));
     type->ty = STRUCT;
 
-    StructUnion *struct_union = calloc(1, sizeof(StructUnion));
-    type->struct_union = struct_union;
-    struct_union->name = tok->str;
-    struct_union->len  = tok->len;
+    if(consume("{")) {
+      StructUnion *struct_union = calloc(1, sizeof(StructUnion));
+      type->struct_union = struct_union;
+      struct_union->name = tok->str;
+      struct_union->len  = tok->len;
 
-    Type *ty = specifier();
+      struct_union->next = structs;
+      structs = struct_union;
+      // incomplete type now
 
-    Token *vtok = consume_ident();
-    Var *var = calloc(1, sizeof(Var));
-    struct_union->declarators = var;
-    var->type = ty;
-    var->name = vtok->str;
-    var->len  = vtok->len;
+      Type *ty = specifier();
 
-    type->size = ty->size; // sum of all elements
+      Token *vtok = consume_ident();
+      Var *var = calloc(1, sizeof(Var));
+      struct_union->declarators = var;
+      var->type = ty;
+      var->name = vtok->str;
+      var->len  = vtok->len;
 
-    expect(";");
-    expect("}");
+      type->size = ty->size; // sum of all elements
+      struct_union->size = type->size;
 
-    struct_union->next = structs;
-    structs = struct_union;
+      expect(";");
+      expect("}");
 
-    return type;
+      return type;
+    }
+    else {
+      StructUnion *struct_union = find_struct_union(tok);
+      type->struct_union = struct_union;
+      type->size = struct_union->size;
+      return type;
+    }
   }
   else error_at(token->str, "anonymous struct is unimplemented");
 }

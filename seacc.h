@@ -132,6 +132,7 @@ struct StructUnion {
 
   char *name;
   int len; // length of name
+  int size;
 
   StructUnion *next;
 };
