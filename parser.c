@@ -69,7 +69,7 @@ Type *calc_type(Node *node) {
     case ND_DEREF:
       return calc_type(node->lhs)->ptr_to;
     case ND_DOT:
-      return calc_type(node->lhs)->struct_union->declarators->type;
+      return find_member(node->lhs, node->rhs->token)->type;
     default:
       error("Cannot calculate type on compiliation");
   }
@@ -433,7 +433,7 @@ Node *expr() {
 
 Type *specifier();
 /*
- * struct_union = ident "{" specifier ident ";" "}"
+ * struct_union = ident "{" (specifier ident ";")+ "}"
  *              | ident
  */
 Type *struct_union(TokenKind kind) {
@@ -441,6 +441,7 @@ Type *struct_union(TokenKind kind) {
   if(tok) {
     Type *type = calloc(1, sizeof(Type));
     type->ty = STRUCT;
+    type->size = 0;
 
     if(consume("{")) {
       StructUnion *struct_union = calloc(1, sizeof(StructUnion));
@@ -452,26 +453,35 @@ Type *struct_union(TokenKind kind) {
       structs = struct_union;
       // incomplete type now
 
-      Type *ty = specifier();
+      Var head = {.next = NULL, .offset = 0, .type = NULL};
+      Var *var = &head;
+      do {
+        Type *ty = specifier();
 
-      Token *vtok = consume_ident();
-      Var *var = calloc(1, sizeof(Var));
-      struct_union->declarators = var;
-      var->type = ty;
-      var->name = vtok->str;
-      var->len  = vtok->len;
+        Token *vtok = consume_ident();
+        var->next = calloc(1, sizeof(Var));
+        int delta_offset = var->type ? var->type->size : 0;
+        var->next->offset = var->offset + delta_offset;
+        var = var->next;
 
-      type->size = ty->size; // sum of all elements
+        var->type = ty;
+        var->name = vtok->str;
+        var->len  = vtok->len;
+
+        type->size += ty->size;
+
+        expect(";");
+      } while(!consume("}"));
+
+      struct_union->declarators = head.next;
       struct_union->size = type->size;
-
-      expect(";");
-      expect("}");
 
       return type;
     }
     else {
       StructUnion *struct_union = find_struct_union(tok);
       type->struct_union = struct_union;
+      if(struct_union->size == 0) error_at(token->str, "incomplete type");
       type->size = struct_union->size;
       return type;
     }

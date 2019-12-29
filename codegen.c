@@ -22,6 +22,14 @@ typedef enum {
   RK_BX,
 } RegKind;
 
+Var *find_member(Node *lhs, Token *tok) {
+  StructUnion *struct_union = calc_type(lhs)->struct_union;
+  for(Var *var=struct_union->declarators; var; var=var->next)
+    if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+      return var;
+  return NULL;
+}
+
 void any_reg_to_r_reg(char *reg, RegKind kind) {
   if(strcmp(reg, reg_table[3][kind]) == 0) return;
   printf("  movsx %s, %s\n", reg_table[3][kind], reg);
@@ -82,6 +90,9 @@ void gen_lval(Node *node) {
   }
   if(node->kind == ND_DOT) {
     gen_lval(node->lhs);
+    printf("  pop rax\n");
+    printf("  add rax, %d\n", find_member(node->lhs, node->rhs->token)->offset);
+    printf("  push rax\n");
     return;
   }
   error("代入の左辺が変数ではありません");
@@ -242,7 +253,9 @@ void gen(Node *node) {
   if(node->kind == ND_DOT) {
     gen_lval(node);
     printf("  pop rax\n");
-    printf("  mov %s, %s [rax]\n", REG_NODE(node->lhs, RK_AX), psize(SIZEOF(node)));
+    Var *member = find_member(node->lhs, node->rhs->token);
+    printf("  mov %s, %s [rax]\n",
+        reg(member->type->size, RK_AX), psize(member->type->size));
     printf("  push rax\n");
     return;
   }
