@@ -17,6 +17,7 @@ struct Struct t;
 
 int main() {
   struct Struct u;
+  // FIXME: s.x = 'z';
   s.a = 123;
   s.b = 456;
   s.c = 789;
@@ -31,6 +32,7 @@ int main() {
   assert_equal(u.a, 123);
   assert_equal(u.b, 456);
   assert_equal(u.c, 789);
+  // FIXME: assert_equal(u.x, 'z');
   s.a = s.b - s.a;
   assert_equal(s.a, 333);
   return 0;
