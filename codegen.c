@@ -30,18 +30,18 @@ Var *find_member(Node *lhs, Token *tok) {
   return NULL;
 }
 
-void any_reg_to_r_reg(char *reg, RegKind kind) {
-  if(strcmp(reg, reg_table[3][kind]) == 0) return;
-  printf("  movsx %s, %s\n", reg_table[3][kind], reg);
-  return;
-}
-
 char *reg(int size, RegKind kind) {
   if(size == 1) return reg_table[0][kind];
   if(size == 2) return reg_table[1][kind];
   if(size == 4) return reg_table[2][kind];
   if(size == 8) return reg_table[3][kind];
   return "WRONG_REG";
+}
+
+void to_64bit(int size, RegKind kind) {
+  if(size == 8) return;
+  printf("  movsx %s, %s\n", reg(8, kind), reg(size, kind));
+  return;
 }
 
 char *psize(int size) {
@@ -194,7 +194,7 @@ void gen(Node *node) {
       if(!cur) break;
       gen(cur);
       printf("  pop %s\n", reg(8, arg_reg[i]));
-      any_reg_to_r_reg(reg(SIZEOF(cur), arg_reg[i]), arg_reg[i]);
+      to_64bit(SIZEOF(cur), arg_reg[i]);
       cur = cur->next;
     }
 
@@ -290,7 +290,7 @@ void gen(Node *node) {
       if(node->var->type->ty == ARY) return;
       printf("  pop rax\n");
       printf("  mov %s, %s [rax]\n", REG_NODE(node, RK_AX), PSIZE_NODE(node));
-      any_reg_to_r_reg(REG_NODE(node, RK_AX), RK_AX);
+      to_64bit(SIZEOF(node), RK_AX);
       printf("  push rax\n");
       return;
     case ND_INIT:
@@ -345,7 +345,7 @@ void gen(Node *node) {
       printf("  pop rax\n");
       printf("  mov %s [rax], %s\n", PSIZE_NODE(node), REG_NODE(node, RK_DI));
       printf("  mov %s, %s\n", REG_NODE(node, RK_AX), REG_NODE(node, RK_DI));
-      any_reg_to_r_reg(REG_NODE(node, RK_AX), RK_AX);
+      to_64bit(SIZEOF(node), RK_AX);
       printf("  push rax\n");
       return;
     case ND_ADDR:
@@ -392,8 +392,8 @@ void gen(Node *node) {
       printf("  sub %s, %s\n", lreg, rreg);
       break;
     case ND_MUL:
-      any_reg_to_r_reg(lreg, RK_AX);
-      any_reg_to_r_reg(rreg, RK_DI);
+      to_64bit(size, RK_AX);
+      to_64bit(size, RK_DI);
       printf("  imul rax, rdi\n");
       break;
     case ND_DIV:
@@ -423,7 +423,7 @@ void gen(Node *node) {
     default:
       error("Unexpected binary operator");
   }
-  any_reg_to_r_reg(lreg, RK_AX);
+  to_64bit(size, RK_AX);
 
   printf("  push rax\n");
 }
