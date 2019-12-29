@@ -258,6 +258,12 @@ Token *tokenize(char *p) {
       continue;
     }
 
+    if(memcmp(p, "union", 5) == 0 && !is_alnum(p[5])) {
+      cur = new_token(TK_UNION, cur, p, 5);
+      p += 5;
+      continue;
+    }
+
     if(memcmp(p, "sizeof", 6) == 0 && !is_alnum(p[6])) {
       cur = new_token(TK_SIZEOF, cur, p, 6);
       p += 6;

@@ -8,6 +8,7 @@ typedef enum {
   TK_INT,
   TK_CHAR,
   TK_STRUCT,
+  TK_UNION,
   TK_RETURN,
   TK_IF,
   TK_WHILE,
@@ -38,6 +39,7 @@ typedef enum {
   ND_DIV,
   ND_NUM,
   ND_STRUCT,
+  ND_UNION,
   ND_STR,
   ND_EQ,
   ND_NE,
@@ -91,7 +93,7 @@ struct Node {
 typedef struct Type Type;
 
 // order is important: casted from left to right
-typedef enum { STRUCT, /* <- cannot cast */ CHAR, INT, ARY, PTR } TType;
+typedef enum { STRUCT, UNION, /* <- cannot cast */ CHAR, INT, ARY, PTR } TType;
 
 struct Type {
   TType ty;

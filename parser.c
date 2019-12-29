@@ -123,6 +123,7 @@ bool check_specifier() {
     case TK_INT:
     case TK_CHAR:
     case TK_STRUCT:
+    case TK_UNION:
       return true;
     default:
       return false;
@@ -196,8 +197,15 @@ Node *find_var(Token *tok) {
   return NULL;
 }
 
-StructUnion *find_struct_union(Token *tok) {
+StructUnion *find_struct(Token *tok) {
   for(StructUnion *su = structs; su; su = su->next)
+    if(su->len == tok->len && !memcmp(tok->str, su->name, su->len))
+      return su;
+  return NULL;
+}
+
+StructUnion *find_union(Token *tok) {
+  for(StructUnion *su = unions; su; su = su->next)
     if(su->len == tok->len && !memcmp(tok->str, su->name, su->len))
       return su;
   return NULL;
@@ -443,7 +451,8 @@ Type *struct_union(TokenKind kind) {
   Token *tok = consume_ident();
   if(tok) {
     Type *type = calloc(1, sizeof(Type));
-    type->ty = STRUCT;
+    if(kind == TK_STRUCT) type->ty = STRUCT;
+    else type->ty = UNION;
     type->size = 0;
 
     if(consume("{")) {
@@ -452,8 +461,14 @@ Type *struct_union(TokenKind kind) {
       struct_union->name = tok->str;
       struct_union->len  = tok->len;
 
-      struct_union->next = structs;
-      structs = struct_union;
+      if(kind == TK_STRUCT) {
+        struct_union->next = structs;
+        structs = struct_union;
+      }
+      else { // union
+        struct_union->next = unions;
+        unions = struct_union;
+      }
       // incomplete type now
 
       Var head = {.next = NULL, .offset = 0, .type = NULL};
@@ -463,15 +478,22 @@ Type *struct_union(TokenKind kind) {
 
         Token *vtok = consume_ident();
         var->next = calloc(1, sizeof(Var));
-        int delta_offset = var->type ? var->type->size : 0;
-        var->next->offset = var->offset + delta_offset;
+        if(kind == TK_STRUCT) {
+          int delta_offset = var->type ? var->type->size : 0;
+          var->next->offset = var->offset + delta_offset;
+        }
+        else { // union
+          var->next->offset = 0;
+        }
         var = var->next;
 
         var->type = ty;
         var->name = vtok->str;
         var->len  = vtok->len;
 
-        type->size += ty->size;
+        if(kind == TK_STRUCT) type->size += ty->size;
+        else // union
+          if(type->size < ty->size) type->size = ty->size;
 
         expect(";");
       } while(!consume("}"));
@@ -482,7 +504,10 @@ Type *struct_union(TokenKind kind) {
       return type;
     }
     else {
-      StructUnion *struct_union = find_struct_union(tok);
+
+      StructUnion *struct_union = NULL;
+      if(kind == TK_STRUCT) struct_union = find_struct(tok);
+      else struct_union = find_union(tok); // union
       type->struct_union = struct_union;
       if(struct_union->size == 0) error_at(token->str, "incomplete type");
       type->size = struct_union->size;
@@ -503,6 +528,7 @@ Type *specifier() {
   if(consume_kind(TK_INT)) type = gen_type(INT, NULL, ty_size(INT));
   else if(consume_kind(TK_CHAR)) type = gen_type(CHAR, NULL, ty_size(CHAR));
   else if(consume_kind(TK_STRUCT)) type = struct_union(TK_STRUCT);
+  else if(consume_kind(TK_UNION)) type = struct_union(TK_UNION);
   else error_at(token->str, "type name expected");
   while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;

@@ -16,6 +16,8 @@ int main(int argc, char *argv[]) {
   nodes = NULL;
   global = NULL;
   functions = NULL;
+  structs = NULL;
+  unions = NULL;
 
   filename = argv[1];
   char *code = read_file(filename);
