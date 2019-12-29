@@ -188,12 +188,13 @@ void gen(Node *node) {
     fname[node->func->len] = '\0';
     int padding = 16-(nodes->offset%16);
 
-    char *arg_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+    RegKind arg_reg[4] = {RK_DI, RK_SI, RK_DX, RK_CX};
     Node *cur = node->func->args;
-    for(int i=0; i<6; i++) {
+    for(int i=0; i<4; i++) {
       if(!cur) break;
       gen(cur);
-      printf("  pop %s\n", arg_reg[i]);
+      printf("  pop %s\n", reg(8, arg_reg[i]));
+      any_reg_to_r_reg(reg(SIZEOF(cur), arg_reg[i]), arg_reg[i]);
       cur = cur->next;
     }
 
