@@ -189,7 +189,6 @@ void gen(Node *node) {
     int padding = 16-(nodes->offset%16);
 
     char *arg_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-    int *args[6] = {};
     Node *cur = node->func->args;
     for(int i=0; i<6; i++) {
       if(!cur) break;
@@ -420,6 +419,8 @@ void gen(Node *node) {
       printf("  setle al\n");
       printf("  movzb rax, al\n");
       break;
+    default:
+      error("Unexpected binary operator");
   }
   any_reg_to_r_reg(lreg, RK_AX);
 

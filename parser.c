@@ -15,6 +15,7 @@ int ty_size(TType ty) {
       return 8;
     default:
       error("cannot calculate type size");
+      return -1; // not reached
   }
 }
 
@@ -72,6 +73,7 @@ Type *calc_type(Node *node) {
       return find_member(node->lhs, node->rhs->token)->type;
     default:
       error("Cannot calculate type on compiliation");
+      return NULL; // not reached
   }
 }
 
@@ -95,6 +97,7 @@ int compute_const_expr(Node *exp) {
       return compute_const_expr(exp->rhs);
     default:
       error("Unexpected node. Cannot compute expression value on compile");
+      return -1;
   }
 }
 
@@ -486,7 +489,10 @@ Type *struct_union(TokenKind kind) {
       return type;
     }
   }
-  else error_at(token->str, "anonymous struct is unimplemented");
+  else {
+    error_at(token->str, "anonymous struct is unimplemented");
+    return NULL; // not reached
+  }
 }
 
 /*
