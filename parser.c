@@ -70,7 +70,7 @@ Type *calc_type(Node *node) {
     case ND_DEREF:
       return calc_type(node->lhs)->ptr_to;
     case ND_DOT:
-      return find_member(node->lhs, node->rhs->token)->type;
+      return find_member(calc_type(node->lhs), node->rhs->token)->type;
     default:
       error("Cannot calculate type on compiliation");
       return NULL; // not reached
@@ -340,6 +340,16 @@ Node *postfix() {
       Token *tok = consume_ident();
       if(tok) {
         node = new_node(ND_DOT, node, new_node_name(tok));
+        continue;
+      }
+      else error("identifier expected");
+    }
+    if(consume("->")) {
+      Token *tok = consume_ident();
+      if(tok) {
+        node = new_node(ND_DEREF, node, NULL);
+        node = new_node(ND_DOT, node, new_node_name(tok));
+        continue;
       }
       else error("identifier expected");
     }

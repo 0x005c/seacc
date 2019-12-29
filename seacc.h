@@ -154,7 +154,7 @@ void gen_lit(StringLiteral *lit);
 void gen_global(Var *var);
 void gen(Node *node);
 int compute_const_expr(Node *exp);
-Var *find_member(Node *lhs, Token *tok);
+Var *find_member(Type *typ, Token *tok);
 
 Token *token;
 char *filename;

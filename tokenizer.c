@@ -105,6 +105,12 @@ Token *tokenize(char *p) {
         p+=2;
         continue;
       }
+      if(p[1] == '>') {
+        cur = new_token(TK_RESERVED, cur, p, 2);
+        p+=2;
+        continue;
+      }
+
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }

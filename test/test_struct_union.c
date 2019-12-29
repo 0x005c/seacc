@@ -50,6 +50,11 @@ int main() {
   assert_equal(u2.c, 'b');
   assert_equal(u3.c, 'b');
 
+  struct Struct *sp = &u;
+  assert_equal(sp->a, 123);
+  assert_equal(sp->b, 456);
+  assert_equal(sp->c, 789);
+  // FIXME: struct Struct *sp2 = &s; ...
   return 0;
 }
 
