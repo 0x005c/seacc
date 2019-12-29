@@ -435,7 +435,7 @@ Type *specifier();
  * struct_union = ident "{" specifier ident ";" "}"
  *              | ident
  */
-Type *structunion(TokenKind kind) {
+Type *struct_union(TokenKind kind) {
   Token *tok = consume_ident();
   if(tok) {
     Type *type = calloc(1, sizeof(Type));
@@ -485,7 +485,7 @@ Type *specifier() {
   Type *type = NULL;
   if(consume_kind(TK_INT)) type = gen_type(INT, NULL, ty_size(INT));
   else if(consume_kind(TK_CHAR)) type = gen_type(CHAR, NULL, ty_size(CHAR));
-  else if(consume_kind(TK_STRUCT)) type = structunion(TK_STRUCT);
+  else if(consume_kind(TK_STRUCT)) type = struct_union(TK_STRUCT);
   else error_at(token->str, "type name expected");
   while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;
