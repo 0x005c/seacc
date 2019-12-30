@@ -26,6 +26,7 @@ bool ptr_like(Node *node) {
 }
 
 Type anonymous_char = {.ty = CHAR, .size = 1};
+Type anonymous_char_ptr = {.ty = PTR, .size = 8, .ptr_to = &anonymous_char};
 Type anonymous_int = {.ty = INT, .size = 4};
 
 Type *larger_type(Type *a, Type *b) {
@@ -71,6 +72,8 @@ Type *calc_type(Node *node) {
       return calc_type(node->lhs)->ptr_to;
     case ND_DOT:
       return find_member(calc_type(node->lhs), node->rhs->token)->type;
+    case ND_STR:
+      return &anonymous_char_ptr;
     default:
       error("Cannot calculate type on compiliation");
       return NULL; // not reached
