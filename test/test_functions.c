@@ -12,8 +12,9 @@ int assert_equal(int l, int r) {
   assert_true(l==r);
 }
 
-int f() { return 20; }
+int f(); // FIXME: g() works incorrectly when delete this line
 int g() { return f()*2; }
+int f() { return 20; }
 int id(int x) { return x; }
 int many(int a, int b, int c, int d, int e, int f) {
   return a+b+c+d+e+f;

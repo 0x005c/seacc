@@ -692,7 +692,7 @@ Node *stmt() {
 }
 
 /*
- * program = specifier ident "(" (specifier ident ",")* (specifier ident)? ")" block
+ * program = specifier ident "(" (specifier ident ",")* (specifier ident)? ")" (block|";")
  *         | specifier ident ( "[" expr "]" )* ";"
  */
 void program() {
@@ -701,7 +701,13 @@ void program() {
     Token *tok = consume_ident();
     if(!tok) error("Function definition starts with identifier\n");
     if(consume("(")) {
-      Function *func = calloc(1, sizeof(Function));
+      Function *func;
+      if(func = find_func(tok)) {
+        while(!consume(")")) token = token->next;
+        func->body = stmt();
+        continue;
+      }
+      func = calloc(1, sizeof(Function));
       func->locals = NULL;
       func->name = tok->str;
       func->len = tok->len;
@@ -735,7 +741,8 @@ void program() {
         func->locals = head.next;
         func->params = head.next;
       }
-      func->body = stmt(); // XXX: allow only block
+      if(!consume(";")) func->body = stmt(); // TODO: block only
+      else func->body = NULL;
       func->next = functions;
       functions = func;
       continue;
