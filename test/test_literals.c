@@ -14,6 +14,8 @@ int assert_equal(int l, int r) {
   assert_true(l==r);
 }
 
+int strncmp(char *l, char *r, long size);
+
 // FIXME: char *str = "abc";
 int main() {
   assert_equal('a', 97);
@@ -30,5 +32,8 @@ int main() {
   assert_true(s[1] == 'b');
   assert_true(s[2] == 'c');
   assert_true(s[3] == '\0');
+  assert_true(strncmp(s, "abcd", 3) == 0);
+  assert_true(strncmp(s, "abc", 3) == 0);
+  assert_true(strncmp(s, "ab", 3));
   return 0;
 }
