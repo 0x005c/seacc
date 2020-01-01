@@ -137,6 +137,7 @@ bool consume_kind(TokenKind kind) {
 
 bool check_specifier() {
   switch(token->kind) {
+    case TK_VOID:
     case TK_INT:
     case TK_CHAR:
     case TK_STRUCT:
@@ -552,7 +553,8 @@ Type *struct_union(TokenKind kind) {
  */
 Type *specifier() {
   Type *type = NULL;
-  if(consume_kind(TK_INT)) type = gen_type(INT, NULL, ty_size(INT));
+  // TODO: don't consider void as int
+  if(consume_kind(TK_INT) || consume_kind(TK_VOID)) type = gen_type(INT, NULL, ty_size(INT));
   else if(consume_kind(TK_CHAR)) type = gen_type(CHAR, NULL, ty_size(CHAR));
   else if(consume_kind(TK_STRUCT)) type = struct_union(TK_STRUCT);
   else if(consume_kind(TK_UNION)) type = struct_union(TK_UNION);

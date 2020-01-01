@@ -1,5 +1,7 @@
 int count = 0;
 
+void exit(int code);
+
 int assert_true(int result) {
   count = count+1;
   if(result) {

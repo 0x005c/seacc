@@ -4,6 +4,7 @@ typedef enum {
   TK_CHAR_LITERAL,
   TK_STRING_LITERAL,
   TK_INT,
+  TK_VOID,
   TK_CHAR,
   TK_STRUCT,
   TK_UNION,
