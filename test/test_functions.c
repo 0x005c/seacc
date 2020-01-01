@@ -37,6 +37,9 @@ int fib(int x) {
   return fib(x-1) + fib(x-2);
 }
 
+// declared but not defined
+int h(int x);
+
 int main() {
   assert_equal(f(), 20);
   assert_equal(g(), 40);
