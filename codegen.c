@@ -3,12 +3,8 @@
 
 #include "seacc.h"
 
-#define SIZEOF(Node) (calc_type(Node)->size)
-#define REG_NODE(Node, Kind) (reg(SIZEOF(Node), Kind))
-#define PSIZE_NODE(Node) (psize(SIZEOF(Node)))
-
 // (r|e)sp, (r|e)bp is excluded: always use rsp, rbp
-char reg_table[][6][4] = {
+char reg_table[5][6][4] = {
   { "al", "dil", "sil",  "dl",  "cl",  "bl"},
   { "ax",  "di",  "si",  "dx",  "cx",  "bx"},
   {"eax", "edi", "esi", "edx", "ecx", "ebx"},
@@ -51,6 +47,18 @@ char *psize(int size) {
   if(size == 4) return "DWORD PTR";
   if(size == 8) return "QWORD PTR";
   return "WRONG PTR";
+}
+
+int size_of(Node *node) {
+  return calc_type(node)->size;
+}
+
+char *psize_node(Node *node) {
+  return psize(size_of(node));
+}
+
+char *reg_node(Node *node, RegKind kind) {
+  return reg(size_of(node), kind);
 }
 
 void gen(Node *node);
@@ -196,7 +204,7 @@ void gen(Node *node) {
       if(!cur) break;
       gen(cur);
       printf("  pop rax\n");
-      to_64bit(SIZEOF(cur), RK_AX);
+      to_64bit(size_of(cur), RK_AX);
       printf("  push rax\n");
       cur = cur->next;
     }
@@ -295,8 +303,8 @@ void gen(Node *node) {
       gen_lval(node);
       if(node->var->type->ty == ARY) return;
       printf("  pop rax\n");
-      printf("  mov %s, %s [rax]\n", REG_NODE(node, RK_AX), PSIZE_NODE(node));
-      to_64bit(SIZEOF(node), RK_AX);
+      printf("  mov %s, %s [rax]\n", reg_node(node, RK_AX), psize_node(node));
+      to_64bit(size_of(node), RK_AX);
       printf("  push rax\n");
       return;
     case ND_INIT:
@@ -349,9 +357,9 @@ void gen(Node *node) {
       gen(node->rhs);
       printf("  pop rdi\n");
       printf("  pop rax\n");
-      printf("  mov %s [rax], %s\n", PSIZE_NODE(node), REG_NODE(node, RK_DI));
-      printf("  mov %s, %s\n", REG_NODE(node, RK_AX), REG_NODE(node, RK_DI));
-      to_64bit(SIZEOF(node), RK_AX);
+      printf("  mov %s [rax], %s\n", psize_node(node), reg_node(node, RK_DI));
+      printf("  mov %s, %s\n", reg_node(node, RK_AX), reg_node(node, RK_DI));
+      to_64bit(size_of(node), RK_AX);
       printf("  push rax\n");
       return;
     case ND_ADDR:
@@ -377,7 +385,7 @@ void gen(Node *node) {
   char *rreg = reg(size, RK_DI);
 
   char *cqo = "  WRONG CQO\n";
-  switch(SIZEOF(node)) {
+  switch(size_of(node)) {
     case 1:
       cqo="  movsx ax, al\n  cqo\n";
       break;
