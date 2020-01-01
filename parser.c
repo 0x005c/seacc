@@ -143,6 +143,7 @@ bool check_specifier() {
     case TK_INT:
     case TK_LONG:
     case TK_CHAR:
+    case TK_ENUM:
     case TK_STRUCT:
     case TK_UNION:
       return true;
@@ -552,7 +553,44 @@ struct Type *struct_union(enum TokenKind kind) {
 }
 
 /*
- * specifier = ("int"|"char"|("struct"|"union") struct_union) "*"*
+ * enumerable = ident "{" ident ("," ident)* ","? "}"
+ *            | ident
+ */
+struct Type *enumerable() {
+  struct Token *name = consume_ident();
+  if(!name) error_at(token->str, "Identifier expected");
+  if(consume("{")) {
+    struct Token *tok = consume_ident();
+    if(!tok) error_at(token->str, "Identifier expected");
+
+    int value = 0;
+
+    struct Var *cur;
+    for(cur=global; cur->next; cur=cur->next);
+
+    bool break_after_loop = false;
+    while(tok) {
+      if(!consume(",")) break_after_loop = true;
+      struct Var *var = calloc(1, sizeof(struct Var));
+      var->next = NULL;
+      var->name = tok->str;
+      var->len = tok->len;
+      var->type = &anonymous_int;
+      var->offset = cur->offset + var->type->size;
+      var->initial = value++;
+      cur->next = var;
+      cur = cur->next;
+      tok = consume_ident();
+      if(break_after_loop) break;
+    }
+    expect("}");
+    return &anonymous_int;
+  }
+  return &anonymous_int;
+}
+
+/*
+ * specifier = ("int"|"char"|("struct"|"union") struct_union|"enum" enumerable) "*"*
  */
 struct Type *specifier() {
   struct Type *type = NULL;
@@ -562,6 +600,7 @@ struct Type *specifier() {
   else if(consume_kind(TK_CHAR)) type = gen_type(CHAR, NULL, ty_size(CHAR));
   else if(consume_kind(TK_STRUCT)) type = struct_union(TK_STRUCT);
   else if(consume_kind(TK_UNION)) type = struct_union(TK_UNION);
+  else if(consume_kind(TK_ENUM)) type = enumerable();
   else error_at(token->str, "type name expected");
   while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;

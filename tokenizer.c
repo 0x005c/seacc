@@ -260,6 +260,12 @@ struct Token *tokenize(char *p) {
       continue;
     }
 
+    if(memcmp(p, "enum", 4) == 0 && !is_alnum(p[4])) {
+      cur = new_token(TK_ENUM, cur, p, 4);
+      p += 4;
+      continue;
+    }
+
     if(memcmp(p, "int", 3) == 0 && !is_alnum(p[3])) {
       cur = new_token(TK_INT, cur, p, 3);
       p += 3;

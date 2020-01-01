@@ -13,6 +13,7 @@ enum TokenKind {
   TK_IF,
   TK_WHILE,
   TK_FOR,
+  TK_ENUM,
   TK_ELSE,
   TK_SIZEOF,
   TK_NUM,
