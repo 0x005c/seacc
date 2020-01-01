@@ -1,10 +1,12 @@
-#include <stdio.h>
-
 #include "seacc.h"
+
+#define NULL 0
 
 Token *token;
 
 char *user_input;
+
+int printf(char *fmt, ...);
 
 int main(int argc, char **argv) {
   if(argc != 2) {
