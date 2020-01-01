@@ -190,12 +190,17 @@ void gen(Node *node) {
 
     RegKind arg_reg[4] = {RK_DI, RK_SI, RK_DX, RK_CX};
     Node *cur = node->func->args;
-    for(int i=0; i<4; i++) {
+    int imax;
+    for(imax=0; imax<4; imax++) {
       if(!cur) break;
       gen(cur);
-      printf("  pop %s\n", reg(8, arg_reg[i]));
-      to_64bit(SIZEOF(cur), arg_reg[i]);
+      printf("  pop rax\n");
+      to_64bit(SIZEOF(cur), RK_AX);
+      printf("  push rax\n");
       cur = cur->next;
+    }
+    for(int i=imax-1; i>=0; i--) {
+      printf("  pop %s\n", reg(8, arg_reg[i]));
     }
 
     printf("  sub rsp, %d\n", padding);

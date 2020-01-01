@@ -14,7 +14,7 @@ int assert_equal(int l, int r) {
 
 int main() {
   assert_equal(0, 0);
-  // FIXME: assert_equal(-42, -42);
+  assert_equal(-42, -42);
   assert_equal(42, 42);
   assert_equal(5+20-4, 21);
   assert_equal(12 + 34 - 5, 41);
