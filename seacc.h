@@ -1,4 +1,4 @@
-typedef enum {
+enum TokenKind {
   TK_RESERVED,
   TK_IDENT,
   TK_CHAR_LITERAL,
@@ -16,22 +16,18 @@ typedef enum {
   TK_SIZEOF,
   TK_NUM,
   TK_EOF,
-} TokenKind;
-
-typedef struct Token Token;
-typedef struct StringLiteral StringLiteral;
-typedef struct StructUnion StructUnion;
+};
 
 struct Token {
-  TokenKind kind;
-  Token *next;
+  enum TokenKind kind;
+  struct Token *next;
   int val;
-  StringLiteral *lit;
+  struct StringLiteral *lit;
   char *str;
   int len;
 };
 
-typedef enum {
+enum NodeKind {
   ND_ADD,
   ND_SUB,
   ND_MUL,
@@ -61,49 +57,41 @@ typedef enum {
   ND_DOT,
   ND_ARROW,
   ND_NAME,
-} NodeKind;
-
-typedef struct Function Function;
-
-typedef struct Node Node;
-
-typedef struct Var Var;
+};
 
 // TODO: clean up
 struct Node {
-  NodeKind kind;
-  Token *token;
-  Node *next;
+  enum NodeKind kind;
+  struct Token *token;
+  struct Node *next;
 
-  Node *lhs;
-  Node *rhs;
-  Node *cond;
-  Node *body;
-  Node *elsebody;
+  struct Node *lhs;
+  struct Node *rhs;
+  struct Node *cond;
+  struct Node *body;
+  struct Node *elsebody;
 
-  Var *var;
-  Function *func;
+  struct Var *var;
+  struct Function *func;
 
   int offset;
   int val;
   int id;
 };
 
-typedef struct Type Type;
-
 // order is important: casted from left to right
-typedef enum { STRUCT, UNION, /* <- cannot cast */ CHAR, INT, ARY, PTR } TType;
+enum TType { STRUCT, UNION, /* <- cannot cast */ CHAR, INT, ARY, PTR };
 
 struct Type {
-  TType ty;
-  Type *ptr_to;
-  StructUnion *struct_union;
+  enum TType ty;
+  struct Type *ptr_to;
+  struct StructUnion *struct_union;
   int size; // always non-zero
 };
 
 struct Var {
-  Type *type;
-  Var *next;
+  struct Type *type;
+  struct Var *next;
   char *name;
   long initial;
   int len;
@@ -111,12 +99,12 @@ struct Var {
 };
 
 struct Function {
-  Type *type;
-  Function *next;
-  Node *body;
-  Node *args;
-  Var *locals;
-  Var *params;
+  struct Type *type;
+  struct Function *next;
+  struct Node *body;
+  struct Node *args;
+  struct Var *locals;
+  struct Var *params;
   char *name;
   int len;
   int offset;
@@ -125,17 +113,17 @@ struct Function {
 struct StringLiteral {
   char *str;
   int id;
-  StringLiteral *next;
+  struct StringLiteral *next;
 };
 
 struct StructUnion {
-  Var *declarators;
+  struct Var *declarators;
 
   char *name;
   int len; // length of name
   int size;
 
-  StructUnion *next;
+  struct StructUnion *next;
 };
 
 void error_at(char *loc, char *fmt, ...);
@@ -143,24 +131,24 @@ void error(char *fmt, ...);
 
 char *read_file(char *path);
 
-Token *tokenize(char *p);
+struct Token *tokenize(char *p);
 
-Node *expr();
+struct Node *expr();
 void program();
 
-Type *calc_type(Node *node);
-void gen_lit(StringLiteral *lit);
-void gen_global(Var *var);
-void gen(Node *node);
-int compute_const_expr(Node *exp);
-Var *find_member(Type *typ, Token *tok);
+struct Type *calc_type(struct Node *node);
+void gen_lit(struct StringLiteral *lit);
+void gen_global(struct Var *var);
+void gen(struct Node *node);
+int compute_const_expr(struct Node *exp);
+struct Var *find_member(struct Type *typ, struct Token *tok);
 
-Token *token;
+struct Token *token;
 char *filename;
 char *user_input;
-Node *nodes;
-Var *global;
-Function *functions;
-StringLiteral *slit;
-StructUnion *structs;
-StructUnion *unions;
+struct Node *nodes;
+struct Var *global;
+struct Function *functions;
+struct StringLiteral *slit;
+struct StructUnion *structs;
+struct StructUnion *unions;

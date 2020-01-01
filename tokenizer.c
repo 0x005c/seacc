@@ -12,8 +12,8 @@ bool is_alnum(char c) {
          (c == '_');
 }
 
-Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
-  Token *tok = calloc(1, sizeof(Token));
+struct Token *new_token(enum TokenKind kind, struct Token *cur, char *str, int len) {
+  struct Token *tok = calloc(1, sizeof(struct Token));
   tok->kind = kind;
   tok->str = str;
   tok->len = len;
@@ -21,18 +21,18 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   return tok;
 }
 
-StringLiteral *find_lit(char *str) {
+struct StringLiteral *find_lit(char *str) {
   return NULL;
 }
 
-StringLiteral *get_lit(char *str, int len) {
+struct StringLiteral *get_lit(char *str, int len) {
   char *text = calloc(1, len+1);
   strncpy(text, str, len);
   text[len] = '\0';
-  StringLiteral *lit = find_lit(text);
+  struct StringLiteral *lit = find_lit(text);
   if(lit) return lit;
 
-  lit = calloc(1, sizeof(StringLiteral));
+  lit = calloc(1, sizeof(struct StringLiteral));
   lit->str = text;
   lit->id = slit ? slit->id+1 : 0;
   lit->next = slit;
@@ -40,10 +40,10 @@ StringLiteral *get_lit(char *str, int len) {
   return lit;
 }
 
-Token *tokenize(char *p) {
-  Token head;
+struct Token *tokenize(char *p) {
+  struct Token head;
   head.next = NULL;
-  Token *cur = &head;
+  struct Token *cur = &head;
 
   while(*p) {
     if(isspace(*p)) {

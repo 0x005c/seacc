@@ -2,7 +2,7 @@
 
 #define NULL 0
 
-Token *token;
+struct Token *token;
 
 char *user_input;
 
@@ -31,11 +31,11 @@ int main(int argc, char **argv) {
   printf(".global main\n");
 
   printf(".data\n");
-  for(StringLiteral *lit=slit; lit; lit=lit->next) gen_lit(lit);
+  for(struct StringLiteral *lit=slit; lit; lit=lit->next) gen_lit(lit);
   printf(".data\n");
-  for(Var *cur=global; cur; cur=cur->next) gen_global(cur);
+  for(struct Var *cur=global; cur; cur=cur->next) gen_global(cur);
   printf(".text\n");
-  for(Node *cur = nodes; cur; cur = cur->next) gen(cur);
+  for(struct Node *cur = nodes; cur; cur = cur->next) gen(cur);
 
   return 0;
 }

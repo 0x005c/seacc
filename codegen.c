@@ -19,9 +19,9 @@ typedef enum {
   RK_BX,
 } RegKind;
 
-Var *find_member(Type *typ, Token *tok) {
-  StructUnion *struct_union = typ->struct_union;
-  for(Var *var=struct_union->declarators; var; var=var->next)
+struct Var *find_member(struct Type *typ, struct Token *tok) {
+  struct StructUnion *struct_union = typ->struct_union;
+  for(struct Var *var=struct_union->declarators; var; var=var->next)
     if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
       return var;
   return NULL;
@@ -49,26 +49,26 @@ char *psize(int size) {
   return "WRONG PTR";
 }
 
-int size_of(Node *node) {
+int size_of(struct Node *node) {
   return calc_type(node)->size;
 }
 
-char *psize_node(Node *node) {
+char *psize_node(struct Node *node) {
   return psize(size_of(node));
 }
 
-char *reg_node(Node *node, RegKind kind) {
+char *reg_node(struct Node *node, RegKind kind) {
   return reg(size_of(node), kind);
 }
 
-void gen(Node *node);
+void gen(struct Node *node);
 
-void gen_lit(StringLiteral *lit) {
+void gen_lit(struct StringLiteral *lit) {
   printf(".Lstr%d:\n", lit->id);
   printf("  .string \"%s\"\n", lit->str);
 }
 
-void gen_global(Var *var) {
+void gen_global(struct Var *var) {
   char vname[var->len+1];
   strncpy(vname, var->name, var->len);
   vname[var->len] = '\0';
@@ -77,8 +77,8 @@ void gen_global(Var *var) {
   else printf("  .zero %d\n", var->type->size);
 }
 
-void gen_lval(Node *node) {
-  NodeKind kind = node->kind;
+void gen_lval(struct Node *node) {
+  enum NodeKind kind = node->kind;
   if(kind == ND_DEREF) {
     gen(node->lhs);
     return;
@@ -90,7 +90,7 @@ void gen_lval(Node *node) {
     return;
   }
   if(kind == ND_GVAR) {
-    Var *var = node->var;
+    struct Var *var = node->var;
     char vname[var->len+1];
     strncpy(vname, var->name, var->len);
     vname[var->len] = '\0';
@@ -107,7 +107,7 @@ void gen_lval(Node *node) {
   error("代入の左辺が変数ではありません");
 }
 
-void gen_if(Node *node, int id) {
+void gen_if(struct Node *node, int id) {
   if(node->elsebody) {
     gen(node->cond);
     printf("  pop rax\n");
@@ -129,7 +129,7 @@ void gen_if(Node *node, int id) {
   }
 }
 
-void gen_while(Node *node, int id) {
+void gen_while(struct Node *node, int id) {
   printf(".Lbegin%d:\n", id);
   gen(node->cond);
   printf("  pop rax\n");
@@ -140,7 +140,7 @@ void gen_while(Node *node, int id) {
   printf(".Lend%d:\n", id);
 }
 
-void gen_for(Node *node, int id) {
+void gen_for(struct Node *node, int id) {
   if(node->lhs) gen(node->lhs);
   printf(".Lbegin%d:\n", id);
   if(node->cond) gen(node->cond);
@@ -154,11 +154,11 @@ void gen_for(Node *node, int id) {
   printf(".Lend%d:\n", id);
 }
 
-void gen_init_array(Node *node, int elem_size) {
+void gen_init_array(struct Node *node, int elem_size) {
   printf("  pop rax\n");
   printf("  push rax\n");
   int count=0;
-  for(Node *cur=node; cur; cur=cur->rhs) {
+  for(struct Node *cur=node; cur; cur=cur->rhs) {
     gen(cur->lhs);
     printf("  pop rdi\n");
     printf("  pop rax\n");
@@ -173,9 +173,9 @@ void gen_init_array(Node *node, int elem_size) {
 
 int label_id = 0;
 
-void gen(Node *node) {
+void gen(struct Node *node) {
   if(node->kind == ND_BLOCK) {
-    Node *cur = node->body;
+    struct Node *cur = node->body;
     while(cur) {
       gen(cur);
       switch(cur->kind) {
@@ -198,7 +198,7 @@ void gen(Node *node) {
     int padding = 16-(nodes->offset%16);
 
     RegKind arg_reg[4] = {RK_DI, RK_SI, RK_DX, RK_CX};
-    Node *cur = node->func->args;
+    struct Node *cur = node->func->args;
     int imax;
     for(imax=0; imax<4; imax++) {
       if(!cur) break;
@@ -220,7 +220,7 @@ void gen(Node *node) {
   }
   if(node->kind == ND_DEFUN) {
     char fname[255];
-    Function *func = node->func;
+    struct Function *func = node->func;
     if(!func->body) return;
     strncpy(fname, func->name, func->len);
     fname[func->len] = '\0';
@@ -235,7 +235,7 @@ void gen(Node *node) {
     printf("  sub rsp, %d\n", offset);
 
     char *param_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-    Var *cur = func->params;
+    struct Var *cur = func->params;
     for(int i=0; i<6; i++) {
       if(!cur) break;
       int size = cur->type->size;
@@ -254,7 +254,7 @@ void gen(Node *node) {
   }
   if(node->kind == ND_DEREF) {
     gen(node->lhs);
-    Type *type = calc_type(node->lhs)->ptr_to;
+    struct Type *type = calc_type(node->lhs)->ptr_to;
     int size;
     if(type->ty == ARY) size = 8;
     else size = type->size;
@@ -268,7 +268,7 @@ void gen(Node *node) {
   if(node->kind == ND_DOT) {
     gen_lval(node);
     printf("  pop rax\n");
-    Var *member = find_member(calc_type(node->lhs), node->rhs->token);
+    struct Var *member = find_member(calc_type(node->lhs), node->rhs->token);
     printf("  mov %s, %s [rax]\n",
         reg(member->type->size, RK_AX), psize(member->type->size));
     printf("  push rax\n");
@@ -316,7 +316,7 @@ void gen(Node *node) {
         return;
       }
 
-      Type *ltype = calc_type(node->lhs);
+      struct Type *ltype = calc_type(node->lhs);
       // TODO: need more strict struct comparation
       if(ltype->ty == STRUCT && ltype->size == calc_type(node->rhs)->size) {
         gen_lval(node->rhs);
@@ -377,7 +377,7 @@ void gen(Node *node) {
   printf("  pop rax\n");
 
   // TODO: see node->rhs
-  Type *type = calc_type(node->lhs);
+  struct Type *type = calc_type(node->lhs);
   int size;
   if(type->ty == ARY) size = 8;
   else size = type->size;
