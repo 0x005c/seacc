@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <stdio.h>
 
 #include "seacc.h"
 
@@ -6,7 +6,7 @@ Token *token;
 
 char *user_input;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char **argv) {
   if(argc != 2) {
     error("引数の数が違います");
     return 1;
