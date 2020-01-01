@@ -709,7 +709,37 @@ Node *stmt() {
 }
 
 /*
- * program = specifier ident "(" (specifier ident ",")* (specifier ident)? ")" (block|";")
+ * parameter_list = ((specifier ident ",")* specifier ident)?
+ */
+Var *parameter_list() {
+  Var head = {.next = NULL};
+  Var *cur = &head;
+  for(;;) {
+    Type *type = specifier();
+    Token *tok = consume_ident();
+    if(!tok) error("Identifier expected");
+    Var *var = calloc(1, sizeof(Var));
+    var->next = NULL;
+    var->name = tok->str;
+    var->len = tok->len;
+    var->type = type;
+    var->offset = nodes->offset + type->size;
+    cur->next = var;
+    cur = cur->next;
+    if(!consume(",")) break;
+  }
+  return head.next;
+}
+
+/*
+ * parameter_type_list = parameter_list
+ */
+Var *parameter_type_list() {
+  return parameter_list();
+}
+
+/*
+ * program = specifier ident "(" parameter_type_list ")" (stmt|";")
  *         | specifier ident ( "[" expr "]" )* ";"
  */
 void program() {
@@ -734,29 +764,17 @@ void program() {
       node->func = func;
       node->next = nodes;
       nodes = node;
-      if(consume(")"))
+      if(consume(")")) {
+        func->locals = NULL;
         func->params = NULL;
+      }
       else {
-        Var head = {.next = NULL};
-        Var *cur = &head;
-        for(;;) {
-          Type *type = specifier();
-          Token *tok = consume_ident();
-          if(!tok) error("Identifier expected");
-          Var *var = calloc(1, sizeof(Var));
-          var->next = NULL;
-          var->name = tok->str;
-          var->len = tok->len;
-          var->type = type;
-          var->offset = nodes->offset + type->size;
-          node->offset = var->offset;
-          cur->next = var;
-          cur = cur->next;
-          if(!consume(",")) break;
-        }
+        Var *var = parameter_type_list();
+        for(Var *v=var; v; v=v->next)
+          node->offset = v->offset;
         expect(")");
-        func->locals = head.next;
-        func->params = head.next;
+        func->locals = var;
+        func->params = var;
       }
       if(!consume(";")) func->body = stmt(); // TODO: block only
       else func->body = NULL;
