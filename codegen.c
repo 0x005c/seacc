@@ -221,6 +221,7 @@ void gen(Node *node) {
   if(node->kind == ND_DEFUN) {
     char fname[255];
     Function *func = node->func;
+    if(!func->body) return;
     strncpy(fname, func->name, func->len);
     fname[func->len] = '\0';
     printf("%s:\n", fname);

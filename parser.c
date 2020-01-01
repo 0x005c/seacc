@@ -709,12 +709,22 @@ Node *stmt() {
 }
 
 /*
- * parameter_list = ((specifier ident ",")* specifier ident)?
+ * parameter_list = (specifier ident ",")* specifier ident
+ * parameter_type_list = parameter_list ("," "...")?
  */
-Var *parameter_list() {
+Var *parameter_type_list() {
   Var head = {.next = NULL};
   Var *cur = &head;
   for(;;) {
+    if(consume("...")) {
+      Var *var = calloc(1, sizeof(Var));
+      var->next = NULL;
+      var->type = NULL;
+      var->offset = cur->offset;
+      cur->next = var;
+      cur = cur->next;
+      return head.next;
+    }
     Type *type = specifier();
     Token *tok = consume_ident();
     if(!tok) error("Identifier expected");
@@ -729,13 +739,6 @@ Var *parameter_list() {
     if(!consume(",")) break;
   }
   return head.next;
-}
-
-/*
- * parameter_type_list = parameter_list
- */
-Var *parameter_type_list() {
-  return parameter_list();
 }
 
 /*
