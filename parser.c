@@ -11,6 +11,7 @@ int ty_size(enum TType ty) {
       return 1;
     case INT:
       return 4;
+    case LONG:
     case PTR:
       return 8;
     default:
@@ -28,6 +29,7 @@ bool ptr_like(struct Node *node) {
 struct Type anonymous_char = {.ty = CHAR, .size = 1};
 struct Type anonymous_char_ptr = {.ty = PTR, .size = 8, .ptr_to = &anonymous_char};
 struct Type anonymous_int = {.ty = INT, .size = 4};
+struct Type anonymous_long = {.ty = LONG, .size = 8};
 
 struct Type *larger_type(struct Type *a, struct Type *b) {
   return a->ty > b->ty ? a : b;
@@ -81,7 +83,7 @@ struct Type *calc_type(struct Node *node) {
     case ND_ADDR:
       return type = gen_type(PTR, calc_type(node->lhs), ty_size(PTR));
     case ND_NUM:
-      return &anonymous_int;
+      return &anonymous_long;
     case ND_DEREF:
       return calc_type(node->lhs)->ptr_to;
     case ND_DOT:
@@ -139,6 +141,7 @@ bool check_specifier() {
   switch(token->kind) {
     case TK_VOID:
     case TK_INT:
+    case TK_LONG:
     case TK_CHAR:
     case TK_STRUCT:
     case TK_UNION:
@@ -268,7 +271,7 @@ struct Node *primary() {
       else {
         func->name = tok->str;
         func->len = tok->len;
-        func->type = &anonymous_int;
+        func->type = &anonymous_long;
       }
       if(consume(")")) func->args = NULL;
       else {
@@ -555,6 +558,7 @@ struct Type *specifier() {
   struct Type *type = NULL;
   // TODO: don't consider void as int
   if(consume_kind(TK_INT) || consume_kind(TK_VOID)) type = gen_type(INT, NULL, ty_size(INT));
+  else if(consume_kind(TK_LONG)) type = gen_type(LONG, NULL, ty_size(LONG));
   else if(consume_kind(TK_CHAR)) type = gen_type(CHAR, NULL, ty_size(CHAR));
   else if(consume_kind(TK_STRUCT)) type = struct_union(TK_STRUCT);
   else if(consume_kind(TK_UNION)) type = struct_union(TK_UNION);

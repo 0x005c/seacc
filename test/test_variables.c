@@ -48,6 +48,15 @@ int main() {
   assert_equal(z[9], 9);
   rbx=100;
   assert_equal(rbx, 100);
+  long lx = 10;
+  long ly = 1;
+  long lz[10] = {1,2,3,4,5,6,7,8,9,10};
+  assert_equal(lx, 10);
+  assert_equal(lz[8], 9);
+  lx=100;
+  assert_equal(lx+ly, 101);
+  ly=0; ly=ly+10;
+  assert_equal(ly, 10);
   return 0;
 }
 

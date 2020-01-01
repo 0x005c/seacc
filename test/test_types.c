@@ -50,6 +50,10 @@ int main() {
   assert_equal(sizeof(*cs), 1);
   assert_equal(sizeof(cs), 12345);
   assert_equal(sizeof(cs+1), 8);
+
+  long lx;
+  assert_equal(sizeof(lx), 8);
+  assert_equal(sizeof(&lx), 8);
   return 0;
 }
 

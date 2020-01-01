@@ -266,6 +266,12 @@ struct Token *tokenize(char *p) {
       continue;
     }
 
+    if(memcmp(p, "long", 4) == 0 && !is_alnum(p[4])) {
+      cur = new_token(TK_LONG, cur, p, 4);
+      p += 4;
+      continue;
+    }
+
     if(memcmp(p, "void", 4) == 0 && !is_alnum(p[4])) {
       cur = new_token(TK_VOID, cur, p, 4);
       p += 4;

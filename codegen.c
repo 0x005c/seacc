@@ -285,7 +285,6 @@ void gen(struct Node *node) {
     case ND_FOR:
       gen_for(node, label_id++);
       return;
-    // XXX: RETURN TYPE IS ALWAYS INT NOW
     case ND_RETURN:
       gen(node->lhs);
       printf("  pop rax\n");

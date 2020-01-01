@@ -4,6 +4,7 @@ enum TokenKind {
   TK_CHAR_LITERAL,
   TK_STRING_LITERAL,
   TK_INT,
+  TK_LONG,
   TK_VOID,
   TK_CHAR,
   TK_STRUCT,
@@ -80,7 +81,7 @@ struct Node {
 };
 
 // order is important: casted from left to right
-enum TType { STRUCT, UNION, /* <- cannot cast */ CHAR, INT, ARY, PTR };
+enum TType { STRUCT, UNION, /* <- cannot cast */ CHAR, INT, LONG, ARY, PTR };
 
 struct Type {
   enum TType ty;
