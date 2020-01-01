@@ -50,7 +50,21 @@ Type *calc_type(Node *node) {
     case ND_DIV:
       l = calc_type(node->lhs);
       r = calc_type(node->rhs);
-      return larger_type(l, r);
+      if(l->ty == ARY) {
+        Type *typ = calloc(1, sizeof(Type));
+        typ->ty = PTR;
+        typ->ptr_to = l->ptr_to;
+        typ->size = 8;
+        return typ;
+      }
+      else if(r->ty == ARY) {
+        Type *typ = calloc(1, sizeof(Type));
+        typ->ty = PTR;
+        typ->ptr_to = r->ptr_to;
+        typ->size = 8;
+        return typ;
+      }
+      else return larger_type(l, r);
     case ND_EQ:
     case ND_NE:
     case ND_LT:
