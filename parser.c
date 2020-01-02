@@ -789,12 +789,16 @@ struct Var *parameter_type_list() {
 /*
  * program = specifier ident "(" parameter_type_list ")" (stmt|";")
  *         | specifier ident ( "[" expr "]" )* ";"
+ *         | specifier ";"
  */
 void program() {
   while(!at_eof()) {
     struct Type *type = specifier();
     struct Token *tok = consume_ident();
-    if(!tok) error("Function definition starts with identifier\n");
+    if(!tok) {
+      expect(";");
+      continue;
+    }
     if(consume("(")) {
       struct Function *func;
       if(func = find_func(tok)) {

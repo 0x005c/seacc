@@ -18,13 +18,16 @@ enum Jname {
   TARO,
   JIRO,
   SABURO,
-} jname;
+};
 
 enum Ename {
   ALICE,
   BOB,
   CHARLIE
-} ename;
+};
+
+enum Jname jname;
+enum Ename ename;
 
 int main() {
   jname = TARO;
