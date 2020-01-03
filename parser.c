@@ -789,7 +789,7 @@ struct Var *parameter_type_list() {
     var->name = tok->str;
     var->len = tok->len;
     var->type = type;
-    var->offset = nodes->offset + type->size;
+    var->offset = cur->offset + type->size;
     cur->next = var;
     cur = cur->next;
     if(!consume(",")) break;
