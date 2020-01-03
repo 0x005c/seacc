@@ -31,5 +31,6 @@ try 'test_types.c'
 try 'test_literals.c'
 try 'test_struct_union.c'
 try 'test_enum.c'
+try 'test_preprocessor.c'
 
 echo OK

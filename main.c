@@ -25,6 +25,7 @@ int main(int argc, char **argv) {
   char *code = read_file(filename);
   user_input = code;
   token = tokenize(code);
+  token = preprocess();
   program();
 
   printf(".intel_syntax noprefix\n");

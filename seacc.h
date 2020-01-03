@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 enum TokenKind {
   TK_RESERVED,
   TK_IDENT,
@@ -138,6 +140,7 @@ struct Token *tokenize(char *p);
 
 struct Node *expr();
 void program();
+struct Token *preprocess();
 
 struct Type *calc_type(struct Node *node);
 void gen_lit(struct StringLiteral *lit);
@@ -145,6 +148,9 @@ void gen_global(struct Var *var);
 void gen(struct Node *node);
 int compute_const_expr(struct Node *exp);
 struct Var *find_member(struct Type *typ, struct Token *tok);
+bool consume(char *op);
+bool consume_kind(enum TokenKind kind);
+struct Token *consume_ident();
 
 struct Token *token;
 char *filename;
