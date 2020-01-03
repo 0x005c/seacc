@@ -26,6 +26,7 @@ struct Token {
   int val;
   struct StringLiteral *lit;
   char *str;
+  char *pos;
   int len;
 };
 

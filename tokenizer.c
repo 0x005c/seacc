@@ -15,7 +15,9 @@ bool is_alnum(char c) {
 struct Token *new_token(enum TokenKind kind, struct Token *cur, char *str, int len) {
   struct Token *tok = calloc(1, sizeof(struct Token));
   tok->kind = kind;
-  tok->str = str;
+  tok->str = calloc(1, len+1);
+  strncpy(tok->str, str, len);
+  tok->pos = str;
   tok->len = len;
   cur->next = tok;
   return tok;

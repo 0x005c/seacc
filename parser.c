@@ -123,7 +123,7 @@ int compute_const_expr(struct Node *exp) {
 bool consume(char *op) {
   if(token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
-      memcmp(token->str, op, token->len))
+      strcmp(token->str, op))
     return false;
   token = token->next;
   return true;
@@ -163,14 +163,14 @@ struct Token *consume_ident() {
 void expect(char *op) {
   if(token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
-      memcmp(token->str, op, token->len))
-    error_at(token->str, "'%s'ではありません", op);
+      strcmp(token->str, op))
+    error_at(token->pos, "'%s'ではありません", op);
   token = token->next;
 }
 
 int expect_number() {
   if(token->kind != TK_NUM && token->kind != TK_CHAR_LITERAL)
-    error_at(token->str, "数ではありません");
+    error_at(token->pos, "数ではありません");
   int val = token->val;
   token = token->next;
   return val;
@@ -182,21 +182,21 @@ bool at_eof() {
 
 struct Function *find_func(struct Token *tok) {
   for(struct Function *func = functions; func; func = func->next)
-    if(func->len == tok->len && !memcmp(tok->str, func->name, func->len))
+    if(func->len == tok->len && !strcmp(tok->str, func->name))
       return func;
   return NULL;
 }
 
 struct Var *find_lvar(struct Token *tok) {
   for(struct Var *var = nodes->func->locals; var; var = var->next)
-    if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+    if(var->len == tok->len && !strcmp(tok->str, var->name))
       return var;
   return NULL;
 }
 
 struct Var *find_gvar(struct Token *tok) {
   for(struct Var *var = global; var; var = var->next)
-    if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+    if(var->len == tok->len && !strcmp(tok->str, var->name))
       return var;
   return NULL;
 }
@@ -221,14 +221,14 @@ struct Node *find_var(struct Token *tok) {
 
 struct StructUnion *find_struct(struct Token *tok) {
   for(struct StructUnion *su = structs; su; su = su->next)
-    if(su->len == tok->len && !memcmp(tok->str, su->name, su->len))
+    if(su->len == tok->len && !strcmp(tok->str, su->name))
       return su;
   return NULL;
 }
 
 struct StructUnion *find_union(struct Token *tok) {
   for(struct StructUnion *su = unions; su; su = su->next)
-    if(su->len == tok->len && !memcmp(tok->str, su->name, su->len))
+    if(su->len == tok->len && !strcmp(tok->str, su->name))
       return su;
   return NULL;
 }
@@ -297,7 +297,7 @@ struct Node *primary() {
     else {
       struct Node *node = find_var(tok);
       if(node) return node;
-      else error_at(tok->str, "Unexpected token");
+      else error_at(tok->pos, "Unexpected token");
     }
   }
 
@@ -541,13 +541,13 @@ struct Type *struct_union(enum TokenKind kind) {
       if(kind == TK_STRUCT) struct_union = find_struct(tok);
       else struct_union = find_union(tok); // union
       type->struct_union = struct_union;
-      if(struct_union->size == 0) error_at(token->str, "incomplete type");
+      if(struct_union->size == 0) error_at(token->pos, "incomplete type");
       type->size = struct_union->size;
       return type;
     }
   }
   else {
-    error_at(token->str, "anonymous struct is unimplemented");
+    error_at(token->pos, "anonymous struct is unimplemented");
     return NULL; // not reached
   }
 }
@@ -558,10 +558,10 @@ struct Type *struct_union(enum TokenKind kind) {
  */
 struct Type *enumerable() {
   struct Token *name = consume_ident();
-  if(!name) error_at(token->str, "Identifier expected");
+  if(!name) error_at(token->pos, "Identifier expected");
   if(consume("{")) {
     struct Token *tok = consume_ident();
-    if(!tok) error_at(token->str, "Identifier expected");
+    if(!tok) error_at(token->pos, "Identifier expected");
 
     int value = 0;
 
@@ -601,7 +601,7 @@ struct Type *specifier() {
   else if(consume_kind(TK_STRUCT)) type = struct_union(TK_STRUCT);
   else if(consume_kind(TK_UNION)) type = struct_union(TK_UNION);
   else if(consume_kind(TK_ENUM)) type = enumerable();
-  else error_at(token->str, "type name expected");
+  else error_at(token->pos, "type name expected");
   while(consume("*")) type = gen_type(PTR, type, ty_size(PTR));
   return type;
 }
@@ -709,8 +709,8 @@ struct Node *stmt() {
     struct Var *var = calloc(1, sizeof(struct Var));
     var->type = specifier();
     struct Token *tok = consume_ident();
-    if(!tok) error_at(token->str, "Identifier expected");
-    if(find_var(tok)) error_at(tok->str, "Second declaration");
+    if(!tok) error_at(token->pos, "Identifier expected");
+    if(find_var(tok)) error_at(tok->pos, "Second declaration");
     var->next = nodes->func->locals;
     var->name = tok->str;
     var->len = tok->len;

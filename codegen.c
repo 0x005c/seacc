@@ -22,7 +22,7 @@ typedef enum {
 struct Var *find_member(struct Type *typ, struct Token *tok) {
   struct StructUnion *struct_union = typ->struct_union;
   for(struct Var *var=struct_union->declarators; var; var=var->next)
-    if(var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+    if(var->len == tok->len && !strcmp(tok->str, var->name))
       return var;
   return NULL;
 }
