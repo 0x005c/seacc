@@ -14,14 +14,14 @@ int assert_equal(int l, int r) {
   assert_true(l==r);
 }
 
-struct Struct { char x; int a; int b; int c; };
 struct Struct s;
 struct Struct t;
+struct Struct { char x; int a; int b; int c; };
 
 // union Union2 { char c[2]; int x; } uu;
-union Union { char c; int x; };
 union Union u1;
 union Union u2;
+union Union { char c; int x; };
 
 struct Recursive {
   struct Recursive *child;

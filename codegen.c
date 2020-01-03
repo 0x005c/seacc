@@ -19,14 +19,6 @@ typedef enum {
   RK_BX,
 } RegKind;
 
-struct Var *find_member(struct Type *typ, struct Token *tok) {
-  struct StructUnion *struct_union = typ->struct_union;
-  for(struct Var *var=struct_union->declarators; var; var=var->next)
-    if(var->len == tok->len && !strcmp(tok->str, var->name))
-      return var;
-  return NULL;
-}
-
 char *reg(int size, RegKind kind) {
   if(size == 1) return reg_table[0][kind];
   if(size == 2) return reg_table[1][kind];
@@ -50,7 +42,10 @@ char *psize(int size) {
 }
 
 int size_of(struct Node *node) {
-  return calc_type(node)->size;
+  struct Type *typ = calc_type(node);
+  if(typ->ty == STRUCT) return find_struct(typ->struct_union->name)->size;
+  if(typ->ty == UNION) return find_union(typ->struct_union->name)->size;
+  return typ->size;
 }
 
 char *psize_node(struct Node *node) {
@@ -74,7 +69,17 @@ void gen_global(struct Var *var) {
   vname[var->len] = '\0';
   printf("_%s:\n", vname);
   if(var->initial) printf("  .long %ld\n", var->initial);
-  else printf("  .zero %d\n", var->type->size);
+  else {
+    if(var->type->ty == STRUCT) {
+      struct StructUnion *su = find_struct(var->type->struct_union->name);
+      printf("  .zero %d\n", su->size);
+    }
+    else if(var->type->ty == UNION) {
+      struct StructUnion *su = find_union(var->type->struct_union->name);
+      printf("  .zero %d\n", su->size);
+    }
+    else printf("  .zero %d\n", var->type->size);
+  }
 }
 
 void gen_lval(struct Node *node) {
@@ -99,8 +104,12 @@ void gen_lval(struct Node *node) {
   }
   if(node->kind == ND_DOT) {
     gen_lval(node->lhs);
+    struct Type *typ = calc_type(node->lhs);
     printf("  pop rax\n");
-    printf("  add rax, %d\n", find_member(calc_type(node->lhs), node->rhs->token)->offset);
+    if(typ->ty == STRUCT)
+      printf("  add rax, %d\n",
+          find_member(find_struct(typ->struct_union->name),
+          node->rhs->token)->offset);
     printf("  push rax\n");
     return;
   }
@@ -268,7 +277,16 @@ void gen(struct Node *node) {
   if(node->kind == ND_DOT) {
     gen_lval(node);
     printf("  pop rax\n");
-    struct Var *member = find_member(calc_type(node->lhs), node->rhs->token);
+    struct Type *typ = calc_type(node->lhs);
+    struct Var *member;
+    if(typ->ty == STRUCT)
+      member = find_member(
+          find_struct(typ->struct_union->name),
+          node->rhs->token);
+    else
+      member = find_member(
+          find_union(typ->struct_union->name),
+          node->rhs->token);
     printf("  mov %s, %s [rax]\n",
         reg(member->type->size, RK_AX), psize(member->type->size));
     printf("  push rax\n");

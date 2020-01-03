@@ -86,8 +86,13 @@ struct Type *calc_type(struct Node *node) {
       return &anonymous_long;
     case ND_DEREF:
       return calc_type(node->lhs)->ptr_to;
-    case ND_DOT:
-      return find_member(calc_type(node->lhs), node->rhs->token)->type;
+    case ND_DOT: {
+      struct Type *typ = calc_type(node->lhs);
+      struct StructUnion *su;
+      if(typ->ty == STRUCT) su = find_struct(typ->struct_union->name);
+      else su = find_union(typ->struct_union->name);
+      return find_member(su, node->rhs->token)->type;
+     }
     case ND_STR:
       return &anonymous_char_ptr;
     default:
@@ -219,17 +224,24 @@ struct Node *find_var(struct Token *tok) {
   return NULL;
 }
 
-struct StructUnion *find_struct(struct Token *tok) {
+struct StructUnion *find_struct(char *name) {
   for(struct StructUnion *su = structs; su; su = su->next)
-    if(su->len == tok->len && !strcmp(tok->str, su->name))
+    if(!strcmp(name, su->name))
       return su;
   return NULL;
 }
 
-struct StructUnion *find_union(struct Token *tok) {
+struct StructUnion *find_union(char *name) {
   for(struct StructUnion *su = unions; su; su = su->next)
-    if(su->len == tok->len && !strcmp(tok->str, su->name))
+    if(!strcmp(name, su->name))
       return su;
+  return NULL;
+}
+
+struct Var *find_member(struct StructUnion *struct_union, struct Token *tok) {
+  for(struct Var *var=struct_union->declarators; var; var=var->next)
+    if(var->len == tok->len && !strcmp(tok->str, var->name))
+      return var;
   return NULL;
 }
 
@@ -536,12 +548,10 @@ struct Type *struct_union(enum TokenKind kind) {
       return type;
     }
     else {
-
-      struct StructUnion *struct_union = NULL;
-      if(kind == TK_STRUCT) struct_union = find_struct(tok);
-      else struct_union = find_union(tok); // union
+      struct StructUnion *struct_union = calloc(1, sizeof(struct StructUnion));
+      struct_union->name = tok->str;
+      struct_union->len = tok->len;
       type->struct_union = struct_union;
-      type->size = struct_union->size;
       return type;
     }
   }
