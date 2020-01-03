@@ -23,6 +23,10 @@ union Union { char c; int x; };
 union Union u1;
 union Union u2;
 
+struct Recursive {
+  struct Recursive *child;
+};
+
 int main() {
   struct Struct u;
   union Union u3;
@@ -63,6 +67,10 @@ int main() {
   assert_equal(sp2->a, 333);
   assert_equal(sp2->b, 456);
   assert_equal(sp2->c, 789);
+
+  struct Recursive r;
+  r.child = &r;
+
   return 0;
 }
 

@@ -541,7 +541,6 @@ struct Type *struct_union(enum TokenKind kind) {
       if(kind == TK_STRUCT) struct_union = find_struct(tok);
       else struct_union = find_union(tok); // union
       type->struct_union = struct_union;
-      if(struct_union->size == 0) error_at(token->pos, "incomplete type");
       type->size = struct_union->size;
       return type;
     }
@@ -565,8 +564,8 @@ struct Type *enumerable() {
 
     int value = 0;
 
-    struct Var *cur;
-    for(cur=global; cur->next; cur=cur->next);
+    struct Var head = {.next = NULL};
+    struct Var *cur = &head;
 
     bool break_after_loop = false;
     while(tok) {
@@ -583,6 +582,8 @@ struct Type *enumerable() {
       tok = consume_ident();
       if(break_after_loop) break;
     }
+    cur->next = global;
+    global = head.next;
     expect("}");
     return &anonymous_int;
   }
