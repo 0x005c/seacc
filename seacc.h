@@ -1,5 +1,3 @@
-#include <stdbool.h>
-
 enum TokenKind {
   TK_RESERVED,
   TK_IDENT,
@@ -148,8 +146,8 @@ void gen_global(struct Var *var);
 void gen(struct Node *node);
 int compute_const_expr(struct Node *exp);
 struct Var *find_member(struct Type *typ, struct Token *tok);
-bool consume(char *op);
-bool consume_kind(enum TokenKind kind);
+int consume(char *op);
+int consume_kind(enum TokenKind kind);
 struct Token *consume_ident();
 
 struct Token *token;

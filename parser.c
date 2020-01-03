@@ -120,7 +120,7 @@ int compute_const_expr(struct Node *exp) {
   }
 }
 
-bool consume(char *op) {
+int consume(char *op) {
   if(token->kind != TK_RESERVED ||
       strlen(op) != token->len ||
       strcmp(token->str, op))
@@ -129,7 +129,7 @@ bool consume(char *op) {
   return true;
 }
 
-bool consume_kind(enum TokenKind kind) {
+int consume_kind(enum TokenKind kind) {
   if(token->kind == kind) {
     token = token->next;
     return true;
