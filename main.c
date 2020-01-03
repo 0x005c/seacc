@@ -1,10 +1,6 @@
 #include "seacc.h"
 
-#define NULL 0
-
-struct Token *token;
-
-char *user_input;
+int NULL = 0;
 
 int printf(char *fmt, ...);
 
@@ -32,11 +28,14 @@ int main(int argc, char **argv) {
   printf(".global main\n");
 
   printf(".data\n");
-  for(struct StringLiteral *lit=slit; lit; lit=lit->next) gen_lit(lit);
+  struct StringLiteral *lit=slit;
+  for(; lit; lit=lit->next) gen_lit(lit);
   printf(".data\n");
-  for(struct Var *cur=global; cur; cur=cur->next) gen_global(cur);
+  struct Var *v=global;
+  for(; v; v=v->next) gen_global(v);
   printf(".text\n");
-  for(struct Node *cur = nodes; cur; cur = cur->next) gen(cur);
+  struct Node *cur=nodes;
+  for(; cur; cur=cur->next) gen(cur);
 
   return 0;
 }
