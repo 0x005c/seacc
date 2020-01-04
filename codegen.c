@@ -29,16 +29,16 @@ char *reg(int size, RegKind kind) {
 
 void to_64bit(int size, RegKind kind) {
   if(size == 8) return;
-  printf("  movsx %s, %s\n", reg(8, kind), reg(size, kind));
+  printf("  movsx %%%s, %%%s\n", reg(size, kind), reg(8, kind));
   return;
 }
 
-char *psize(int size) {
-  if(size == 1) return "BYTE PTR";
-  if(size == 2) return "WORD PTR";
-  if(size == 4) return "DWORD PTR";
-  if(size == 8) return "QWORD PTR";
-  return "WRONG PTR";
+char *mov(int size) {
+  if(size == 1) return "movb";
+  if(size == 2) return "movw";
+  if(size == 4) return "movl";
+  if(size == 8) return "movq";
+  return "WRONG_MOV";
 }
 
 int size_of(struct Node *node) {
@@ -48,8 +48,8 @@ int size_of(struct Node *node) {
   return typ->size;
 }
 
-char *psize_node(struct Node *node) {
-  return psize(size_of(node));
+char *mov_node(struct Node *node) {
+  return mov(size_of(node));
 }
 
 char *reg_node(struct Node *node, RegKind kind) {
@@ -67,7 +67,7 @@ void gen_global(struct Var *var) {
   char vname[var->len+1];
   strncpy(vname, var->name, var->len);
   vname[var->len] = '\0';
-  printf("_%s:\n", vname);
+  printf("%s:\n", vname);
   if(var->initial) printf("  .long %ld\n", var->initial);
   else {
     if(var->type->ty == STRUCT) {
@@ -89,9 +89,9 @@ void gen_lval(struct Node *node) {
     return;
   }
   if(kind == ND_LVAR) {
-    printf("  mov rax, rbp\n");
-    printf("  sub rax, %d\n", node->offset);
-    printf("  push rax\n");
+    printf("  movq %%rbp, %%rax\n");
+    printf("  sub $%d, %%rax\n", node->offset);
+    printf("  pushq %%rax\n");
     return;
   }
   if(kind == ND_GVAR) {
@@ -99,18 +99,18 @@ void gen_lval(struct Node *node) {
     char vname[var->len+1];
     strncpy(vname, var->name, var->len);
     vname[var->len] = '\0';
-    printf("  push _%s@GOTPCREL[rip]\n", vname);
+    printf("  pushq %s@GOTPCREL(%%rip)\n", vname);
     return;
   }
   if(node->kind == ND_DOT) {
     gen_lval(node->lhs);
     struct Type *typ = calc_type(node->lhs);
-    printf("  pop rax\n");
+    printf("  popq %%rax\n");
     if(typ->ty == STRUCT)
-      printf("  add rax, %d\n",
+      printf("  add $%d, %%rax\n",
           find_member(find_struct(typ->struct_union->name),
           node->rhs->token)->offset);
-    printf("  push rax\n");
+    printf("  pushq %%rax\n");
     return;
   }
   error("代入の左辺が変数ではありません");
@@ -119,8 +119,8 @@ void gen_lval(struct Node *node) {
 void gen_if(struct Node *node, int id) {
   if(node->elsebody) {
     gen(node->cond);
-    printf("  pop rax\n");
-    printf("  cmp rax, 0\n");
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%rax\n");
     printf("  je  .Lelse%d\n", id);
     gen(node->body);
     printf("  jmp .Lend%d\n", id);
@@ -130,8 +130,8 @@ void gen_if(struct Node *node, int id) {
   }
   else {
     gen(node->cond);
-    printf("  pop rax\n");
-    printf("  cmp rax, 0\n");
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%rax\n");
     printf("  je  .Lend%d\n", id);
     gen(node->body);
     printf(".Lend%d:\n", id);
@@ -141,8 +141,8 @@ void gen_if(struct Node *node, int id) {
 void gen_while(struct Node *node, int id) {
   printf(".Lbegin%d:\n", id);
   gen(node->cond);
-  printf("  pop rax\n");
-  printf("  cmp rax, 0\n");
+  printf("  popq %%rax\n");
+  printf("  cmp $0, %%rax\n");
   printf("  je  .Lend%d\n", id);
   gen(node->body);
   printf("  jmp .Lbegin%d\n", id);
@@ -153,9 +153,9 @@ void gen_for(struct Node *node, int id) {
   if(node->lhs) gen(node->lhs);
   printf(".Lbegin%d:\n", id);
   if(node->cond) gen(node->cond);
-  else printf("  push 1\n");
-  printf("  pop rax\n");
-  printf("  cmp rax, 0\n");
+  else printf("  pushq $1\n");
+  printf("  popq %%rax\n");
+  printf("  cmp $0, %%rax\n");
   printf("  je  .Lend%d\n", id);
   gen(node->body);
   if(node->rhs) gen(node->rhs);
@@ -164,18 +164,19 @@ void gen_for(struct Node *node, int id) {
 }
 
 void gen_init_array(struct Node *node, int elem_size) {
-  printf("  pop rax\n");
-  printf("  push rax\n");
+  printf("  popq %%rax\n");
+  printf("  pushq %%rax\n");
   int count=0;
   for(struct Node *cur=node; cur; cur=cur->rhs) {
     gen(cur->lhs);
-    printf("  pop rdi\n");
-    printf("  pop rax\n");
-    printf("  mov %s [rax+%d], %s\n",
-        psize(elem_size), count*elem_size,
+    printf("  popq %%rdi\n");
+    printf("  popq %%rax\n");
+    printf("  %s %d(%%rax), %%%s\n",
+        mov(elem_size),
+        count*elem_size,
         reg(elem_size, RK_DI));
     count++;
-    printf("  push rax\n");
+    printf("  pushq %%rax\n");
   }
   return;
 }
@@ -193,11 +194,11 @@ void gen(struct Node *node) {
         case ND_FOR:
           break;
         default:
-          printf("  pop rax\n");
+          printf("  popq %%rax\n");
       }
       cur = cur->next;
     }
-    printf("  push rax\n");
+    printf("  pushq %%rax\n");
     return;
   }
   if(node->kind == ND_CALL) {
@@ -212,19 +213,19 @@ void gen(struct Node *node) {
     for(imax=0; imax<4; imax++) {
       if(!cur) break;
       gen(cur);
-      printf("  pop rax\n");
+      printf("  popq %%rax\n");
       to_64bit(size_of(cur), RK_AX);
-      printf("  push rax\n");
+      printf("  pushq %%rax\n");
       cur = cur->next;
     }
     for(int i=imax-1; i>=0; i--) {
-      printf("  pop %s\n", reg(8, arg_reg[i]));
+      printf("  popq %%%s\n", reg(8, arg_reg[i]));
     }
 
-    printf("  sub rsp, %d\n", padding);
+    printf("  sub $%d, %%rsp\n", padding);
     printf("  call %s@PLT\n", fname);
-    printf("  add rsp, %d\n", padding);
-    printf("  push rax\n");
+    printf("  add $%d, %%rsp\n", padding);
+    printf("  pushq %%rax\n");
     return;
   }
   if(node->kind == ND_DEFUN) {
@@ -239,25 +240,25 @@ void gen(struct Node *node) {
     if(func->args) offset += func->args->offset;
 
     // prologue
-    printf("  push rbp\n");
-    printf("  mov rbp, rsp\n");
-    printf("  sub rsp, %d\n", offset);
+    printf("  pushq %%rbp\n");
+    printf("  movq %%rsp, %%rbp\n");
+    printf("  sub $%d, %%rsp\n", offset);
 
     char *param_reg[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
     struct Var *cur = func->params;
     for(int i=0; i<6; i++) {
       if(!cur) break;
       int size = cur->type->size;
-      printf("  mov rax, %s\n", param_reg[i]);
-      printf("  mov %s [rbp-%d], %s\n", psize(cur->type->size), cur->offset, reg(size, RK_AX));
+      printf("  movq %%%s, %%rax\n", param_reg[i]);
+      printf("  %s %%%s, -%d(%%rbp)\n", mov(size), reg(size, RK_AX), cur->offset);
       cur = cur->next;
     }
 
     gen(func->body);
 
     // epilogue
-    printf("  mov rsp, rbp\n");
-    printf("  pop rbp\n");
+    printf("  movq %%rbp, %%rsp\n");
+    printf("  popq %%rbp\n");
     printf("  ret\n");
     return;
   }
@@ -267,16 +268,16 @@ void gen(struct Node *node) {
     int size;
     if(type->ty == ARY) size = 8;
     else size = type->size;
-    printf("  pop rax\n");
-    printf("  mov %s, %s [rax]\n", reg(size, RK_AX), psize(size));
-    printf("  push rax\n");
+    printf("  popq %%rax\n");
+    printf("  %s (%%rax), %%%s\n", mov(size), reg(size, RK_AX));
+    printf("  pushq %%rax\n");
     return;
   }
 
 
   if(node->kind == ND_DOT) {
     gen_lval(node);
-    printf("  pop rax\n");
+    printf("  popq %%rax\n");
     struct Type *typ = calc_type(node->lhs);
     struct Var *member;
     if(typ->ty == STRUCT)
@@ -287,9 +288,8 @@ void gen(struct Node *node) {
       member = find_member(
           find_union(typ->struct_union->name),
           node->rhs->token);
-    printf("  mov %s, %s [rax]\n",
-        reg(member->type->size, RK_AX), psize(member->type->size));
-    printf("  push rax\n");
+    printf("  %s (%%rax), %%%s\n", mov(member->type->size), reg(member->type->size, RK_AX));
+    printf("  pushq %%rax\n");
     return;
   }
 
@@ -305,25 +305,25 @@ void gen(struct Node *node) {
       return;
     case ND_RETURN:
       gen(node->lhs);
-      printf("  pop rax\n");
-      printf("  mov rsp, rbp\n");
-      printf("  pop rbp\n");
+      printf("  popq %%rax\n");
+      printf("  movq %%rbp, %%rsp\n");
+      printf("  popq %%rbp\n");
       printf("  ret\n");
       return;
     case ND_NUM:
-      printf("  push %d\n", node->val);
+      printf("  pushq $%d\n", node->val);
       return;
     case ND_STR:
-      printf("  push .Lstr%d@GOTPCREL[rip]\n", node->id);
+      printf("  pushq .Lstr%d@GOTPCREL(%%rip)\n", node->id);
       return;
     case ND_LVAR:
     case ND_GVAR:
       gen_lval(node);
       if(node->var->type->ty == ARY) return;
-      printf("  pop rax\n");
-      printf("  mov %s, %s [rax]\n", reg_node(node, RK_AX), psize_node(node));
+      printf("  popq %%rax\n");
+      printf("  %s (%%rax), %%%s\n", mov_node(node), reg_node(node, RK_AX));
       to_64bit(size_of(node), RK_AX);
-      printf("  push rax\n");
+      printf("  pushq %%rax\n");
       return;
     case ND_INIT:
     case ND_ASSIGN:
@@ -338,47 +338,47 @@ void gen(struct Node *node) {
       if(ltype->ty == STRUCT && ltype->size == calc_type(node->rhs)->size) {
         gen_lval(node->rhs);
         int offset = 0;
-        printf("  pop rdi\n");
-        printf("  pop rax\n");
+        printf("  popq %%rdi\n");
+        printf("  popq %%rax\n");
         for(;;) {
           int diff = ltype->size - offset;
           if(diff >= 8) {
-            printf("  mov rcx, QWORD PTR [rdi+%d]\n", offset);
-            printf("  mov QWORD PTR [rax+%d], rcx\n", offset);
+            printf("  movq %%rcx, %d(%%rdi)\n", offset);
+            printf("  movq %d(%%rax), %%rcx\n", offset);
             offset += 8;
             continue;
           }
           if(diff >= 4) {
-            printf("  mov ecx, DWORD PTR [rdi+%d]\n", offset);
-            printf("  mov DWORD PTR [rax+%d], ecx\n", offset);
+            printf("  movq %%ecx, %d(%%rdi)\n", offset);
+            printf("  movq %d(%%rax), %%ecx\n", offset);
             offset += 4;
             continue;
           }
           if(diff >= 2) {
-            printf("  mov cx, WORD PTR [rdi+%d]\n", offset);
-            printf("  mov WORD PTR [rax+%d], cx\n", offset);
+            printf("  movq %%cx, %d(%%rdi)\n", offset);
+            printf("  movq %d(%%rax), %%cx\n", offset);
             offset += 2;
             continue;
           }
           if(diff == 1) {
-            printf("  mov cl, BYTE PTR [rdi+%d]\n", offset);
-            printf("  mov BYTE PTR [rax+%d], cl\n", offset);
+            printf("  movq %%cl, %d(%%rdi)\n", offset);
+            printf("  movq %d(%%rax), %%cl\n", offset);
             offset += 1;
             break;
           }
           break;
         }
-        printf("  push rax\n");
+        printf("  pushq %%rax\n");
         return;
       }
 
       gen(node->rhs);
-      printf("  pop rdi\n");
-      printf("  pop rax\n");
-      printf("  mov %s [rax], %s\n", psize_node(node), reg_node(node, RK_DI));
-      printf("  mov %s, %s\n", reg_node(node, RK_AX), reg_node(node, RK_DI));
+      printf("  popq %%rdi\n");
+      printf("  popq %%rax\n");
+      printf("  %s (%%rax), %%%s\n", mov_node(node), reg_node(node, RK_DI));
+      printf("  %s %%%s, %%%s\n", mov_node(node), reg_node(node, RK_AX), reg_node(node, RK_DI));
       to_64bit(size_of(node), RK_AX);
-      printf("  push rax\n");
+      printf("  pushq %%rax\n");
       return;
     case ND_ADDR:
       gen_lval(node->lhs);
@@ -390,8 +390,8 @@ void gen(struct Node *node) {
   gen(node->lhs);
   gen(node->rhs);
 
-  printf("  pop rdi\n");
-  printf("  pop rax\n");
+  printf("  popq %%rdi\n");
+  printf("  popq %%rax\n");
 
   // TODO: see node->rhs
   struct Type *type = calc_type(node->lhs);
@@ -399,13 +399,13 @@ void gen(struct Node *node) {
   if(type->ty == ARY) size = 8;
   else size = type->size;
 
-  char *lreg = reg(size, RK_AX);
-  char *rreg = reg(size, RK_DI);
+  char *lreg = reg(size, RK_DI);
+  char *rreg = reg(size, RK_AX);
 
   char *cqo = "  WRONG CQO\n";
   switch(size_of(node)) {
     case 1:
-      cqo="  movsx ax, al\n  cqo\n";
+      cqo="  movsx %al, %ax\n  cqo\n";
       break;
     case 2:
     case 4:
@@ -418,45 +418,45 @@ void gen(struct Node *node) {
 
   switch(node->kind) {
     case ND_ADD:
-      printf("  add %s, %s\n", lreg, rreg);
+      printf("  add %%%s, %%%s\n", lreg, rreg);
       break;
     case ND_SUB:
-      printf("  sub %s, %s\n", lreg, rreg);
+      printf("  sub %%%s, %%%s\n", lreg, rreg);
       break;
     case ND_MUL:
       to_64bit(size, RK_AX);
       to_64bit(size, RK_DI);
-      printf("  imul rax, rdi\n");
+      printf("  imul %%rax, %%rdi\n");
       break;
     case ND_DIV:
       printf("%s", cqo);
-      printf("  idiv %s\n", rreg);
+      printf("  idiv %%%s\n", lreg);
       break;
     case ND_EQ:
-      printf("  cmp %s, %s\n", lreg, rreg);
-      printf("  sete al\n");
-      printf("  movzb rax, al\n");
+      printf("  cmp %%%s, %%%s\n", lreg, rreg);
+      printf("  sete %%al\n");
+      printf("  movzb %%al, %%rax\n");
       break;
     case ND_NE:
-      printf("  cmp %s, %s\n", lreg, rreg);
-      printf("  setne al\n");
-      printf("  movzb rax, al\n");
+      printf("  cmp %%%s, %%%s\n", lreg, rreg);
+      printf("  setne %%al\n");
+      printf("  movzb %%al, %%rax\n");
       break;
     case ND_LT:
-      printf("  cmp %s, %s\n", lreg, rreg);
-      printf("  setl al\n");
-      printf("  movzb rax, al\n");
+      printf("  cmp %%%s, %%%s\n", lreg, rreg);
+      printf("  setl %%al\n");
+      printf("  movzb %%al, %%rax\n");
       break;
     case ND_LE:
-      printf("  cmp %s, %s\n", lreg, rreg);
-      printf("  setle al\n");
-      printf("  movzb rax, al\n");
+      printf("  cmp %%%s, %%%s\n", lreg, rreg);
+      printf("  setle %%al\n");
+      printf("  movzb %%al, %%rax\n");
       break;
     default:
       error("Unexpected binary operator");
   }
   to_64bit(size, RK_AX);
 
-  printf("  push rax\n");
+  printf("  pushq %%rax\n");
 }
 

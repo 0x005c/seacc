@@ -24,7 +24,6 @@ int main(int argc, char **argv) {
   token = preprocess();
   program();
 
-  printf(".intel_syntax noprefix\n");
   printf(".global main\n");
 
   printf(".data\n");
