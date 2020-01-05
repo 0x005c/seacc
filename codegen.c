@@ -250,6 +250,7 @@ void gen(struct Node *node) {
     struct Var *cur = func->params;
     for(int i=0; i<6; i++) {
       if(!cur) break;
+      if(!cur->type) break;
       int size = cur->type->size;
       printf("  movq %%%s, %%rax\n", param_reg[i]);
       printf("  %s %%%s, -%d(%%rbp)\n", mov(size), reg(size, RK_AX), cur->offset);
