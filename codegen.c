@@ -63,23 +63,42 @@ void gen_lit(struct StringLiteral *lit) {
   printf("  .string \"%s\"\n", lit->str);
 }
 
+int pow2(int val) {
+  int res = 1;
+  while(res < val) res *= 2;
+  return res;
+}
+
 void gen_global(struct Var *var) {
   char vname[var->len+1];
   strncpy(vname, var->name, var->len);
   vname[var->len] = '\0';
-  printf(".global %s\n", vname);
-  printf("%s:\n", vname);
-  if(var->initial) printf("  .long %ld\n", var->initial);
+  if(var->initial) {
+    printf("  .align %d\n", pow2(var->type->size));
+    printf(".global %s\n", vname);
+    printf("%s:\n", vname);
+    printf("  .long %ld\n", var->initial);
+  }
   else {
     if(var->type->ty == STRUCT) {
       struct StructUnion *su = find_struct(var->type->struct_union->name);
+      printf(".global %s\n", vname);
+      printf("%s:\n", vname);
       printf("  .zero %d\n", su->size);
     }
     else if(var->type->ty == UNION) {
       struct StructUnion *su = find_union(var->type->struct_union->name);
+      printf("  .align %d\n", pow2(su->size));
+      printf(".global %s\n", vname);
+      printf("%s:\n", vname);
       printf("  .zero %d\n", su->size);
     }
-    else printf("  .zero %d\n", var->type->size);
+    else {
+      printf("  .align %d\n", pow2(var->type->size));
+      printf(".global %s\n", vname);
+      printf("%s:\n", vname);
+      printf("  .zero %d\n", var->type->size);
+    }
   }
 }
 
