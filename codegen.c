@@ -171,10 +171,10 @@ void gen_init_array(struct Node *node, int elem_size) {
     gen(cur->lhs);
     printf("  popq %%rdi\n");
     printf("  popq %%rax\n");
-    printf("  %s %d(%%rax), %%%s\n",
+    printf("  %s %%%s, %d(%%rax)\n",
         mov(elem_size),
-        count*elem_size,
-        reg(elem_size, RK_DI));
+        reg(elem_size, RK_DI),
+        count*elem_size);
     count++;
     printf("  pushq %%rax\n");
   }
@@ -223,6 +223,7 @@ void gen(struct Node *node) {
     }
 
     printf("  sub $%d, %%rsp\n", padding);
+    printf("  movb $0, %%al\n");
     printf("  call %s@PLT\n", fname);
     printf("  add $%d, %%rsp\n", padding);
     printf("  pushq %%rax\n");
@@ -375,8 +376,8 @@ void gen(struct Node *node) {
       gen(node->rhs);
       printf("  popq %%rdi\n");
       printf("  popq %%rax\n");
-      printf("  %s (%%rax), %%%s\n", mov_node(node), reg_node(node, RK_DI));
-      printf("  %s %%%s, %%%s\n", mov_node(node), reg_node(node, RK_AX), reg_node(node, RK_DI));
+      printf("  %s %%%s, (%%rax)\n", mov_node(node), reg_node(node, RK_DI));
+      printf("  %s %%%s, %%%s\n", mov_node(node), reg_node(node, RK_DI), reg_node(node, RK_AX));
       to_64bit(size_of(node), RK_AX);
       printf("  pushq %%rax\n");
       return;
@@ -426,7 +427,7 @@ void gen(struct Node *node) {
     case ND_MUL:
       to_64bit(size, RK_AX);
       to_64bit(size, RK_DI);
-      printf("  imul %%rax, %%rdi\n");
+      printf("  imul %%rdi, %%rax\n");
       break;
     case ND_DIV:
       printf("%s", cqo);
