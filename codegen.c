@@ -67,6 +67,7 @@ void gen_global(struct Var *var) {
   char vname[var->len+1];
   strncpy(vname, var->name, var->len);
   vname[var->len] = '\0';
+  printf(".global %s\n", vname);
   printf("%s:\n", vname);
   if(var->initial) printf("  .long %ld\n", var->initial);
   else {
