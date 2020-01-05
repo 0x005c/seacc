@@ -100,7 +100,8 @@ void gen_lval(struct Node *node) {
     char vname[var->len+1];
     strncpy(vname, var->name, var->len);
     vname[var->len] = '\0';
-    printf("  pushq %s@GOTPCREL(%%rip)\n", vname);
+    printf("  lea %s(%%rip), %%rax\n", vname);
+    printf("  pushq %%rax\n");
     return;
   }
   if(node->kind == ND_DOT) {
