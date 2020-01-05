@@ -1,7 +1,5 @@
 #include "seacc.h"
 
-int NULL = 0;
-
 int printf(char *fmt, ...);
 
 int main(int argc, char **argv) {
@@ -9,13 +7,6 @@ int main(int argc, char **argv) {
     error("引数の数が違います");
     return 1;
   }
-
-  slit = NULL;
-  nodes = NULL;
-  global = NULL;
-  functions = NULL;
-  structs = NULL;
-  unions = NULL;
 
   filename = argv[1];
   char *code = read_file(filename);
