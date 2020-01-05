@@ -236,6 +236,7 @@ void gen(struct Node *node) {
     if(!func->body) return;
     strncpy(fname, func->name, func->len);
     fname[func->len] = '\0';
+    printf(".global %s\n", fname);
     printf("%s:\n", fname);
 
     int offset = node->offset;

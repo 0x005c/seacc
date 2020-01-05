@@ -15,8 +15,6 @@ int main(int argc, char **argv) {
   token = preprocess();
   program();
 
-  printf(".global main\n");
-
   printf(".data\n");
   struct StringLiteral *lit=slit;
   for(; lit; lit=lit->next) gen_lit(lit);
