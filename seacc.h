@@ -96,7 +96,7 @@ struct Var {
   struct Type *type;
   struct Var *next;
   char *name;
-  long initial;
+  long initial; // initial value
   int len;
   int offset;
 };

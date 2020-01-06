@@ -699,8 +699,26 @@ struct Node *stmt() {
     node->kind = ND_FOR;
     expect("(");
     if(!consume(";")) {
-      node->lhs = expr();
-      expect(";");
+      if(check_specifier()) {
+        struct Type *type = specifier();
+        struct Token *tok = consume_ident();
+        if(!tok) error_at(token->pos, "Identifier expected");
+        struct Var *var = calloc(1, sizeof(struct Var));
+        var->type = type;
+        var->next = functions->locals;
+        functions->locals = var;
+        var->name = tok->str;
+        var->len = tok->len;
+        if(var->next) var->offset = var->next->offset + type->size;
+        else var->offset = type->size;
+        if(consume("="))
+          var->initial = compute_const_expr(expr());
+        expect(";");
+      }
+      else {
+        node->lhs = expr();
+        expect(";");
+      }
     }
 
     if(!consume(";")) {
@@ -839,10 +857,10 @@ void program() {
         func->locals = var;
         func->params = var;
       }
-      if(!consume(";")) func->body = stmt(); // TODO: block only
-      else func->body = NULL;
       func->next = functions;
       functions = func;
+      if(!consume(";")) func->body = stmt(); // TODO: block only
+      else func->body = NULL;
       continue;
     }
     struct Var *var = calloc(1, sizeof(struct Var));

@@ -53,6 +53,9 @@ int main() {
   }
   assert_equal(x, 2);
 
+  x=-1;
+  for(int i=0; i<10; ++i) assert_equal(i, ++x);
+
   // FIXME: for(x=0; x<10; x=x+1); assert_equal(x, 10);
   {}{{{{{}}}}}{}{}{{{{{}}}}}
 
