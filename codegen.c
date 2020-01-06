@@ -77,7 +77,7 @@ void gen_global(struct Var *var) {
     printf("  .align %d\n", pow2(var->type->size));
     printf(".global %s\n", vname);
     printf("%s:\n", vname);
-    printf("  .long %ld\n", var->initial);
+    printf("  .long %d\n", compute_const_expr(var->initial));
   }
   else {
     if(var->type->ty == STRUCT) {

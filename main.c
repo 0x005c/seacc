@@ -16,14 +16,13 @@ int main(int argc, char **argv) {
   program();
 
   printf(".data\n");
-  struct StringLiteral *lit=slit;
-  for(; lit; lit=lit->next) gen_lit(lit);
+  for(struct StringLiteral *lit=slit; lit; lit=lit->next) gen_lit(lit);
+
   printf(".data\n");
-  struct Var *v=global;
-  for(; v; v=v->next) gen_global(v);
+  for(struct Var *v=global; v; v=v->next) gen_global(v);
+
   printf(".text\n");
-  struct Node *cur=nodes;
-  for(; cur; cur=cur->next) gen(cur);
+  for(struct Node *cur=nodes; cur; cur=cur->next) gen(cur);
 
   return 0;
 }

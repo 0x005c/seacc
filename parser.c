@@ -586,7 +586,7 @@ struct Type *enumerable() {
       var->len = tok->len;
       var->type = &anonymous_int;
       var->offset = cur->offset + var->type->size;
-      var->initial = value++;
+      var->initial = new_node_num(value++);
       cur->next = var;
       cur = cur->next;
       tok = consume_ident();
@@ -711,8 +711,16 @@ struct Node *stmt() {
         var->len = tok->len;
         if(var->next) var->offset = var->next->offset + type->size;
         else var->offset = type->size;
-        if(consume("="))
-          var->initial = compute_const_expr(expr());
+        if(consume("=")) {
+          struct Node *asgn = calloc(1, sizeof(struct Node));
+          struct Node *lvar = calloc(1, sizeof(struct Node));
+          lvar->kind = ND_LVAR;
+          lvar->var = var;
+          asgn->kind = ND_ASSIGN;
+          asgn->lhs = lvar;
+          asgn->rhs = expr();
+          node->lhs = asgn;
+        }
         expect(";");
       }
       else {
@@ -873,7 +881,7 @@ void program() {
     }
     if(!consume(";")) {
       expect("=");
-      var->initial = compute_const_expr(expr());
+      var->initial = expr();
       expect(";");
     }
     var->next = global;
