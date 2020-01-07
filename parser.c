@@ -865,9 +865,11 @@ void program() {
         func->locals = var;
         func->params = var;
       }
-      func->next = functions;
-      functions = func;
-      if(!consume(";")) func->body = stmt(); // TODO: block only
+      if(!consume(";")) {
+        func->next = functions;
+        functions = func;
+        func->body = stmt(); // TODO: block only
+      }
       else func->body = NULL;
       continue;
     }

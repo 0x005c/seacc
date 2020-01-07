@@ -14,8 +14,15 @@ int assert_equal(int l, int r) {
   assert_true(l==r);
 }
 
-int f(); // FIXME: g() works incorrectly when delete this line
-int g() { return f()*2; }
+int func_with_arg(int x);
+int f();
+int g() {
+  func_with_arg(3);
+  return f()*2;
+}
+int func_with_arg(int x) {
+  return x;
+}
 int f() { return 20; }
 int id(int x) { return x; }
 int many(int a, int b, int c, int d, int e, int f) {
