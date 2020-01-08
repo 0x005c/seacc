@@ -82,22 +82,14 @@ void gen_global(struct Var *var) {
   else {
     if(var->type->ty == STRUCT) {
       struct StructUnion *su = find_struct(var->type->struct_union->name);
-      printf(".global %s\n", vname);
-      printf("%s:\n", vname);
-      printf("  .zero %d\n", su->size);
+      printf("  .comm %s, %d, %d\n", vname, pow2(su->size), pow2(su->size));
     }
     else if(var->type->ty == UNION) {
       struct StructUnion *su = find_union(var->type->struct_union->name);
-      printf("  .align %d\n", pow2(su->size));
-      printf(".global %s\n", vname);
-      printf("%s:\n", vname);
-      printf("  .zero %d\n", su->size);
+      printf("  .comm %s, %d, %d\n", vname, pow2(su->size), pow2(su->size));
     }
     else {
-      printf("  .align %d\n", pow2(var->type->size));
-      printf(".global %s\n", vname);
-      printf("%s:\n", vname);
-      printf("  .zero %d\n", var->type->size);
+      printf("  .comm %s, %d, %d\n", vname, pow2(var->type->size), pow2(var->type->size));
     }
   }
 }

@@ -101,6 +101,12 @@ struct Var {
   int offset;
 };
 
+struct Enum {
+  char *name;
+  int value;
+  struct Enum *next;
+};
+
 struct Function {
   struct Type *type;
   struct Function *next;
@@ -161,3 +167,4 @@ struct Function *functions;
 struct StringLiteral *slit;
 struct StructUnion *structs;
 struct StructUnion *unions;
+struct Enum *enums;

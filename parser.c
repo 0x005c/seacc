@@ -245,6 +245,12 @@ struct Var *find_member(struct StructUnion *struct_union, struct Token *tok) {
   return NULL;
 }
 
+struct Enum *find_enum(struct Token *tok) {
+  for(struct Enum *cur=enums; cur; cur=cur->next)
+    if(strcmp(tok->str, cur->name) == 0) return cur;
+  return NULL;
+}
+
 struct Node *new_node(enum NodeKind kind, struct Node *lhs, struct Node *rhs) {
   struct Node *node = calloc(1, sizeof(struct Node));
   node->kind = kind;
@@ -309,7 +315,9 @@ struct Node *primary() {
     else {
       struct Node *node = find_var(tok);
       if(node) return node;
-      else error_at(tok->pos, "Unexpected token");
+      struct Enum *e = find_enum(tok);
+      if(e) return new_node_num(e->value);
+      error_at(tok->pos, "Unexpected token");
     }
   }
 
@@ -574,26 +582,17 @@ struct Type *enumerable() {
 
     int value = 0;
 
-    struct Var head = {.next = NULL};
-    struct Var *cur = &head;
-
     bool break_after_loop = false;
     while(tok) {
       if(!consume(",")) break_after_loop = true;
-      struct Var *var = calloc(1, sizeof(struct Var));
-      var->next = NULL;
-      var->name = tok->str;
-      var->len = tok->len;
-      var->type = &anonymous_int;
-      var->offset = cur->offset + var->type->size;
-      var->initial = new_node_num(value++);
-      cur->next = var;
-      cur = cur->next;
+      struct Enum *e = calloc(1, sizeof(struct Enum));
+      e->name = tok->str;
+      e->value = value++;
+      e->next = enums;
+      enums = e;
       tok = consume_ident();
       if(break_after_loop) break;
     }
-    cur->next = global;
-    global = head.next;
     expect("}");
     return &anonymous_int;
   }
