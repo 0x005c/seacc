@@ -1,24 +1,38 @@
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "seacc.h"
 
-char *read_file(char *path) {
-  FILE *fp = fopen(path, "r");
-  if(!fp) error("cannot open %s: %s", path, strerror(errno));
+struct FILE {
+  int dummy_data;
+};
+
+int errno;
+int SEEK_END = 2;
+int SEEK_SET = 0;
+
+struct FILE *fopen(char *path, char *mode);
+char *strerror(int errno);
+int fseek(struct FILE *fp, long offset, int whence);
+long ftell(struct FILE *fp);
+void *calloc(long nmemb, long size);
+long fread(void *buf, long size, long nmemb, struct FILE *stream);
+int fclose(struct FILE *stream);
+
+char *read_file(char* path) {
+  struct FILE *fp = fopen(path, "r");
+  if(fp==0) error("cannot open %s: %s", path, strerror(errno));
 
   if(fseek(fp, 0, SEEK_END) == -1)
     error("%s: fseek: %s", path, strerror(errno));
-  size_t size = ftell(fp);
+  long size = ftell(fp);
   if(fseek(fp, 0, SEEK_SET) == -1)
     error("%s: fseek: %s", path, strerror(errno));
 
   char *buf = calloc(1, size + 2);
   fread(buf, size, 1, fp);
 
-  if(size==0 || (buf[size-1] != '\n')) buf[size++] = '\n';
+  if(size==0 + (buf[size-1] != '\n')) {
+    buf[size] = '\n';
+    ++size;
+  }
   buf[size] = '\0';
   fclose(fp);
   return buf;
