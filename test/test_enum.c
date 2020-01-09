@@ -2,16 +2,23 @@ int count = 0;
 
 void exit(int code);
 
-int assert_true(int result) {
+int printf(char *fmt, ...);
+
+void assert_true(int result) {
   count = count+1;
-  if(result) {
-    return 0;
+  if(result == 0) {
+    printf("%dth assertion failed\n", count);
+    exit(1);
   }
-  else exit(count);
 }
 
-int assert_equal(int l, int r) {
-  assert_true(l==r);
+void assert_equal(int l, int r) {
+  count = count+1;
+  if(l!=r) {
+    printf("%dth assertion failed\n", count);
+    printf("%d expected, but got %d\n", r, l);
+    exit(1);
+  }
 }
 
 enum Jname {

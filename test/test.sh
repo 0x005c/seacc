@@ -17,7 +17,6 @@ try() {
     echo "$filename: test passed"
   else
     echo "$filename: test not passed"
-    echo "$result th assertion failed"
     exit 1
   fi
 }
