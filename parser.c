@@ -690,6 +690,11 @@ struct Node *stmt() {
     node = calloc(1, sizeof(struct Node));
     node->kind = ND_FOR;
     expect("(");
+
+    struct Scope *scope = calloc(1, sizeof(struct Scope));
+    scope->parent = current_scope;
+    current_scope = scope;
+
     if(!consume(";")) {
       if(check_specifier()) {
         struct Type *type = specifier();
@@ -702,7 +707,7 @@ struct Node *stmt() {
         var->name = tok->str;
         var->len = tok->len;
         if(var->next) var->offset = var->next->offset + type->size;
-        else var->offset = type->size;
+        else var->offset = type->size + current_scope->parent->variables->type->size;
         if(consume("=")) {
           struct Node *asgn = calloc(1, sizeof(struct Node));
           struct Node *lvar = calloc(1, sizeof(struct Node));
@@ -731,6 +736,8 @@ struct Node *stmt() {
       expect(")");
     }
     node->body = stmt();
+
+    current_scope = current_scope->parent;
     return node;
   }
 
