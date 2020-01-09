@@ -192,13 +192,16 @@ struct Function *find_func(struct Token *tok) {
   return NULL;
 }
 
+struct Var *find_var_scope(struct Scope *scope, struct Token *tok) {
+  for(struct Var *var=scope->variables; var; var=var->next)
+    if(strcmp(var->name, tok->str)==0) return var;
+}
+
 struct Node *find_var(struct Scope *scope, struct Token *tok) {
   struct Node *node = calloc(1, sizeof(struct Node));
   if(scope->parent) node->kind = ND_LVAR;
   else node->kind = ND_GVAR;
-  struct Var *var;
-  for(var=scope->variables; var; var=var->next)
-    if(strcmp(var->name, tok->str)==0) break;
+  struct Var *var = find_var_scope(scope, tok);
   if(var) {
     node->var = var;
     if(scope->parent) node->offset = var->offset;
@@ -640,6 +643,10 @@ struct Node *stmt() {
   struct Node *node;
 
   if(consume("{")) {
+    struct Scope *scope = calloc(1, sizeof(struct Scope));
+    scope->parent = current_scope;
+    current_scope = scope;
+
     node = calloc(1, sizeof(struct Node));
     node->kind = ND_BLOCK;
     node->next = NULL;
@@ -651,6 +658,8 @@ struct Node *stmt() {
     }
     cur->next = NULL;
     node->body = head.next;
+
+    current_scope = current_scope->parent;
     return node;
   }
 
@@ -730,7 +739,7 @@ struct Node *stmt() {
     var->type = specifier();
     struct Token *tok = consume_ident();
     if(!tok) error_at(token->pos, "Identifier expected");
-    if(find_var(current_scope, tok)) error_at(tok->pos, "Second declaration");
+    if(find_var_scope(current_scope, tok)) error_at(tok->pos, "Second declaration");
     var->next = current_scope->variables;
     var->name = tok->str;
     var->len = tok->len;
@@ -855,7 +864,21 @@ void program() {
         func->next = functions;
         functions = func;
         current_scope = func->locals;
-        func->body = stmt(); // TODO: block only
+
+        expect("{");
+        struct Node *block = calloc(1, sizeof(struct Node));
+        block->kind = ND_BLOCK;
+        block->next = NULL;
+        struct Node head = {.next = NULL};
+        struct Node *cur = &head;
+        while(!consume("}")) {
+          cur->next = stmt();
+          cur = cur->next;
+        }
+        cur->next = NULL;
+        block->body = head.next;
+
+        func->body = block;
         current_scope = globals;
       }
       else func->body = NULL;

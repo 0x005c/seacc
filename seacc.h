@@ -137,7 +137,6 @@ struct StructUnion {
 
 struct Scope {
   struct Scope *parent;
-
   struct Var *variables;
 };
 

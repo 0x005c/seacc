@@ -21,6 +21,8 @@ int *c;
 int d[123];
 int rbx;
 
+int x = 123;
+
 int main() {
   int x=10;
   int y=1;

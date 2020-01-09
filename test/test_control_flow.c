@@ -31,6 +31,13 @@ int main() {
     if(x<10) x=x*x;
   assert_equal(x, 16);
 
+  {
+    int x = 123;
+    assert_equal(x, 123);
+  }
+
+  assert_equal(x, 16);
+
   x=0;
   if(1>0)
     if(1<0) x=x+1;
