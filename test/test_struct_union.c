@@ -2,16 +2,23 @@ int count = 0;
 
 void exit(int code);
 
-int assert_true(int result) {
+int printf(char *fmt, ...);
+
+void assert_true(int result) {
   count = count+1;
-  if(result) {
-    return 0;
+  if(result == 0) {
+    printf("%dth assertion failed\n", count);
+    exit(1);
   }
-  else exit(count);
 }
 
-int assert_equal(int l, int r) {
-  assert_true(l==r);
+void assert_equal(int l, int r) {
+  count = count+1;
+  if(l!=r) {
+    printf("%dth assertion failed\n", count);
+    printf("%d expected, but got %d\n", r, l);
+    exit(1);
+  }
 }
 
 struct Struct s;
@@ -38,14 +45,14 @@ int main() {
   assert_equal(s.b, 456);
   assert_equal(s.c, 789);
   t = s;
-  // assert_equal(t.a, 123);
-  // assert_equal(t.b, 456);
-  // assert_equal(t.c, 789);
+  assert_equal(t.a, 123);
+  assert_equal(t.b, 456);
+  assert_equal(t.c, 789);
   u = t;
-  // assert_equal(u.a, 123);
-  // assert_equal(u.b, 456);
-  // assert_equal(u.c, 789);
-  // assert_equal(u.x, 'z');
+  assert_equal(u.a, 123);
+  assert_equal(u.b, 456);
+  assert_equal(u.c, 789);
+  assert_equal(u.x, 'z');
   s.a = s.b - s.a;
   assert_equal(s.a, 333);
 
@@ -59,9 +66,9 @@ int main() {
   assert_equal(u3.c, 'b');
 
   struct Struct *sp = &u;
-  // assert_equal(sp->a, 123);
-  // assert_equal(sp->b, 456);
-  // assert_equal(sp->c, 789);
+  assert_equal(sp->a, 123);
+  assert_equal(sp->b, 456);
+  assert_equal(sp->c, 789);
 
   struct Struct *sp2 = &s;
   assert_equal(sp2->a, 333);

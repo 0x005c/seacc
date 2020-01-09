@@ -152,6 +152,7 @@ void program();
 struct Token *preprocess();
 
 struct Type *calc_type(struct Node *node);
+int size_of(struct Type *type);
 void gen_lit(struct StringLiteral *lit);
 void gen_global(struct Var *var);
 void gen(struct Node *node);

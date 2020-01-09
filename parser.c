@@ -323,9 +323,9 @@ struct Node *new_node_add(struct Node *l, struct Node *r) {
   bool lp = ptr_like(l);
   bool rp = ptr_like(r);
   if(lp && !rp)
-    r = new_node(ND_MUL, r, new_node_num(calc_type(l)->ptr_to->size));
+    r = new_node(ND_MUL, r, new_node_num(size_of(calc_type(l)->ptr_to)));
   else if(!lp && rp)
-    l = new_node(ND_MUL, l, new_node_num(calc_type(r)->ptr_to->size));
+    l = new_node(ND_MUL, l, new_node_num(size_of(calc_type(r)->ptr_to)));
   else if(lp && rp)
     // NOTE: does this behaviour follow the standard?
     error("[Compile error] cannot add pointer to pointer");
@@ -337,9 +337,9 @@ struct Node *new_node_sub(struct Node *l, struct Node *r) {
   bool lp = ptr_like(l);
   bool rp = ptr_like(r);
   if(lp && !rp)
-    r = new_node(ND_MUL, r, new_node_num(calc_type(l)->ptr_to->size));
+    r = new_node(ND_MUL, r, new_node_num(size_of(calc_type(l)->ptr_to)));
   else if(!lp && rp)
-    l = new_node(ND_MUL, l, new_node_num(calc_type(r)->ptr_to->size));
+    l = new_node(ND_MUL, l, new_node_num(size_of(calc_type(r)->ptr_to)));
   else if(lp && rp)
     // NOTE: does this behaviour follow the standard?
     error("[Compile error] cannot add pointer to pointer");
@@ -416,7 +416,7 @@ struct Node *unary() {
         new_node_sub(node, new_node_num(1)));
   }
   if(consume_kind(TK_SIZEOF))
-    return new_node_num(calc_type(unary())->size);
+    return new_node_num(size_of(calc_type(unary())));
   return postfix();
 }
 
@@ -706,8 +706,8 @@ struct Node *stmt() {
         current_scope->variables = var;
         var->name = tok->str;
         var->len = tok->len;
-        if(var->next) var->offset = var->next->offset + type->size;
-        else var->offset = type->size + current_scope->parent->variables->type->size;
+        if(var->next) var->offset = var->next->offset + size_of(type);
+        else var->offset = size_of(type) + size_of(current_scope->parent->variables->type);
         if(consume("=")) {
           struct Node *asgn = calloc(1, sizeof(struct Node));
           struct Node *lvar = calloc(1, sizeof(struct Node));
@@ -755,11 +755,11 @@ struct Node *stmt() {
     while(consume("[")) {
       var->type = gen_type(ARY,
           var->type,
-          var->type->size * compute_const_expr(expr()));
+          size_of(var->type) * compute_const_expr(expr()));
       expect("]");
     }
 
-    var->offset = nodes->offset + var->type->size;
+    var->offset = nodes->offset + size_of(var->type);
     nodes->offset = var->offset;
 
     // XXX: { int x; } does not work
@@ -814,7 +814,7 @@ struct Var *parameter_type_list() {
     var->name = tok->str;
     var->len = tok->len;
     var->type = type;
-    var->offset = cur->offset + type->size;
+    var->offset = cur->offset + size_of(type);
     cur->next = var;
     cur = cur->next;
     if(!consume(",")) break;
@@ -896,7 +896,7 @@ void program() {
     while(consume("[")) {
       var->type = gen_type(ARY,
           var->type,
-          var->type->size * compute_const_expr(expr()));
+          size_of(var->type) * compute_const_expr(expr()));
       expect("]");
     }
     if(!consume(";")) {

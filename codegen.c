@@ -41,19 +41,22 @@ char *mov(int size) {
   return "WRONG_MOV";
 }
 
-int size_of(struct Node *node) {
-  struct Type *typ = calc_type(node);
+int size_of_node(struct Node *node) {
+  return size_of(calc_type(node));
+}
+
+int size_of(struct Type *typ) {
   if(typ->ty == STRUCT) return find_struct(typ->struct_union->name)->size;
   if(typ->ty == UNION) return find_union(typ->struct_union->name)->size;
   return typ->size;
 }
 
 char *mov_node(struct Node *node) {
-  return mov(size_of(node));
+  return mov(size_of_node(node));
 }
 
 char *reg_node(struct Node *node, RegKind kind) {
-  return reg(size_of(node), kind);
+  return reg(size_of_node(node), kind);
 }
 
 void gen(struct Node *node);
@@ -227,7 +230,7 @@ void gen(struct Node *node) {
       if(!cur) break;
       gen(cur);
       printf("  popq %%rax\n");
-      to_64bit(size_of(cur), RK_AX);
+      to_64bit(size_of_node(cur), RK_AX);
       printf("  pushq %%rax\n");
       cur = cur->next;
     }
@@ -338,7 +341,7 @@ void gen(struct Node *node) {
       if(node->var->type->ty == ARY) return;
       printf("  popq %%rax\n");
       printf("  %s (%%rax), %%%s\n", mov_node(node), reg_node(node, RK_AX));
-      to_64bit(size_of(node), RK_AX);
+      to_64bit(size_of_node(node), RK_AX);
       printf("  pushq %%rax\n");
       return;
     case ND_INIT:
@@ -350,35 +353,36 @@ void gen(struct Node *node) {
       }
 
       struct Type *ltype = calc_type(node->lhs);
+      int size = size_of_node(node->lhs);
       // TODO: need more strict struct comparation
-      if(ltype->ty == STRUCT && ltype->size == calc_type(node->rhs)->size) {
+      if(ltype->ty == STRUCT) {
         gen_lval(node->rhs);
         int offset = 0;
         printf("  popq %%rdi\n");
         printf("  popq %%rax\n");
         for(;;) {
-          int diff = ltype->size - offset;
+          int diff = size - offset;
           if(diff >= 8) {
-            printf("  movq %%rcx, %d(%%rdi)\n", offset);
-            printf("  movq %d(%%rax), %%rcx\n", offset);
+            printf("  movq %d(%%rdi), %%rcx\n", offset);
+            printf("  movq %%rcx, %d(%%rax)\n", offset);
             offset += 8;
             continue;
           }
           if(diff >= 4) {
-            printf("  movq %%ecx, %d(%%rdi)\n", offset);
-            printf("  movq %d(%%rax), %%ecx\n", offset);
+            printf("  movl %d(%%rdi), %%ecx\n", offset);
+            printf("  movl %%ecx, %d(%%rax)\n", offset);
             offset += 4;
             continue;
           }
           if(diff >= 2) {
-            printf("  movq %%cx, %d(%%rdi)\n", offset);
-            printf("  movq %d(%%rax), %%cx\n", offset);
+            printf("  movw %d(%%rdi), %%cx\n", offset);
+            printf("  movw %%cx, %d(%%rax)\n", offset);
             offset += 2;
             continue;
           }
           if(diff == 1) {
-            printf("  movq %%cl, %d(%%rdi)\n", offset);
-            printf("  movq %d(%%rax), %%cl\n", offset);
+            printf("  movb %d(%%rdi), %%cl\n", offset);
+            printf("  movb %%cl, %d(%%rax)\n", offset);
             offset += 1;
             break;
           }
@@ -393,7 +397,7 @@ void gen(struct Node *node) {
       printf("  popq %%rax\n");
       printf("  %s %%%s, (%%rax)\n", mov_node(node), reg_node(node, RK_DI));
       printf("  %s %%%s, %%%s\n", mov_node(node), reg_node(node, RK_DI), reg_node(node, RK_AX));
-      to_64bit(size_of(node), RK_AX);
+      to_64bit(size_of_node(node), RK_AX);
       printf("  pushq %%rax\n");
       return;
     case ND_ADDR:
@@ -419,7 +423,7 @@ void gen(struct Node *node) {
   char *rreg = reg(size, RK_AX);
 
   char *cqo = "  WRONG CQO\n";
-  switch(size_of(node)) {
+  switch(size_of_node(node)) {
     case 1:
       cqo="  movsx %al, %ax\n  cqo\n";
       break;
