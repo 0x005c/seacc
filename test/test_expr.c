@@ -37,6 +37,8 @@ int main() {
   assert_true(50*2>=100);
   assert_true(50/20<100);
   assert_true(123!=456);
+  assert_equal(!123, 0);
+  assert_equal(!0, 1);
   return 0;
 }
 

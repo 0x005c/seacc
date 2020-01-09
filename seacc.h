@@ -60,6 +60,7 @@ enum NodeKind {
   ND_DOT,
   ND_ARROW,
   ND_NAME,
+  ND_NOT,
 };
 
 // TODO: clean up

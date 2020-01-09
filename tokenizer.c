@@ -157,10 +157,16 @@ struct Token *tokenize(char *p) {
       continue;
     }
 
-    if(*p == '!' && *(p+1) == '=') {
-      cur = new_token(TK_RESERVED, cur, p, 2);
-      p += 2;
-      continue;
+    if(*p == '!') {
+      if(p[1] == '=') {
+        cur = new_token(TK_RESERVED, cur, p, 2);
+        p += 2;
+        continue;
+      }
+      else {
+        cur = new_token(TK_RESERVED, cur, p++, 1);
+        continue;
+      }
     }
 
     if(*p == '"') {

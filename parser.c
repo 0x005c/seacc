@@ -95,6 +95,8 @@ struct Type *calc_type(struct Node *node) {
      }
     case ND_STR:
       return &anonymous_char_ptr;
+    case ND_NOT:
+      return &anonymous_int;
     default:
       error("Cannot calculate type on compiliation");
       return NULL; // not reached
@@ -391,6 +393,7 @@ struct Node *postfix() {
  *       | "-"? postfix
  *       | "*" unary
  *       | "&" unary
+ *       | "!" unary
  *       | "++" unary
  *       | "--" unary
  *       | "sizeof" unary
@@ -405,6 +408,8 @@ struct Node *unary() {
     return new_node(ND_DEREF, unary(), NULL);
   if(consume("&"))
     return new_node(ND_ADDR, unary(), NULL);
+  if(consume("!"))
+    return new_node(ND_NOT, unary(), NULL);
   if(consume("++")) {
     struct Node *node = unary();
     return new_node(ND_ASSIGN, node,
