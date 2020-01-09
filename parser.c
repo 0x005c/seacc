@@ -192,35 +192,19 @@ struct Function *find_func(struct Token *tok) {
   return NULL;
 }
 
-struct Var *find_lvar(struct Token *tok) {
-  for(struct Var *var = nodes->func->locals; var; var = var->next)
-    if(var->len == tok->len && !strcmp(tok->str, var->name))
-      return var;
-  return NULL;
-}
-
-struct Var *find_gvar(struct Token *tok) {
-  for(struct Var *var = global; var; var = var->next)
-    if(var->len == tok->len && !strcmp(tok->str, var->name))
-      return var;
-  return NULL;
-}
-
-struct Node *find_var(struct Token *tok) {
+struct Node *find_var(struct Scope *scope, struct Token *tok) {
   struct Node *node = calloc(1, sizeof(struct Node));
-  struct Var *var = find_lvar(tok);
+  if(scope->parent) node->kind = ND_LVAR;
+  else node->kind = ND_GVAR;
+  struct Var *var;
+  for(var=scope->variables; var; var=var->next)
+    if(strcmp(var->name, tok->str)==0) break;
   if(var) {
-    node->kind = ND_LVAR;
     node->var = var;
-    node->offset = var->offset;
+    if(scope->parent) node->offset = var->offset;
     return node;
   }
-  var = find_gvar(tok);
-  if(var) {
-    node->kind = ND_GVAR;
-    node->var = var;
-    return node;
-  }
+  if(scope->parent) return find_var(scope->parent, tok);
   return NULL;
 }
 
@@ -313,7 +297,7 @@ struct Node *primary() {
       return node;
     }
     else {
-      struct Node *node = find_var(tok);
+      struct Node *node = find_var(current_scope, tok);
       if(node) return node;
       struct Enum *e = find_enum(tok);
       if(e) return new_node_num(e->value);
@@ -704,8 +688,8 @@ struct Node *stmt() {
         if(!tok) error_at(token->pos, "Identifier expected");
         struct Var *var = calloc(1, sizeof(struct Var));
         var->type = type;
-        var->next = functions->locals;
-        functions->locals = var;
+        var->next = current_scope->variables;
+        current_scope->variables = var;
         var->name = tok->str;
         var->len = tok->len;
         if(var->next) var->offset = var->next->offset + type->size;
@@ -746,11 +730,11 @@ struct Node *stmt() {
     var->type = specifier();
     struct Token *tok = consume_ident();
     if(!tok) error_at(token->pos, "Identifier expected");
-    if(find_var(tok)) error_at(tok->pos, "Second declaration");
-    var->next = nodes->func->locals;
+    if(find_var(current_scope, tok)) error_at(tok->pos, "Second declaration");
+    var->next = current_scope->variables;
     var->name = tok->str;
     var->len = tok->len;
-    nodes->func->locals = var;
+    current_scope->variables = var;
 
     while(consume("[")) {
       var->type = gen_type(ARY,
@@ -828,6 +812,8 @@ struct Var *parameter_type_list() {
  *         | specifier ";"
  */
 void program() {
+  globals = calloc(1, sizeof(struct Scope));
+  current_scope = globals;
   while(!at_eof()) {
     struct Type *type = specifier();
     struct Token *tok = consume_ident();
@@ -847,13 +833,14 @@ void program() {
       func->name = tok->str;
       func->len = tok->len;
       func->type = type;
+      func->locals = calloc(1, sizeof(struct Scope));
+      func->locals->parent = current_scope;
       struct Node *node = calloc(1, sizeof(struct Node));
       node->kind = ND_DEFUN;
       node->func = func;
       node->next = nodes;
       nodes = node;
       if(consume(")")) {
-        func->locals = NULL;
         func->params = NULL;
       }
       else {
@@ -861,13 +848,15 @@ void program() {
         for(struct Var *v=var; v; v=v->next)
           node->offset = v->offset;
         expect(")");
-        func->locals = var;
+        func->locals->variables = var;
         func->params = var;
       }
       if(!consume(";")) {
         func->next = functions;
         functions = func;
+        current_scope = func->locals;
         func->body = stmt(); // TODO: block only
+        current_scope = globals;
       }
       else func->body = NULL;
       continue;
@@ -885,8 +874,8 @@ void program() {
       var->initial = expr();
       expect(";");
     }
-    var->next = global;
-    global = var;
+    var->next = globals->variables;
+    globals->variables = var;
     var->name = tok->str;
     var->len = tok->len;
     continue;

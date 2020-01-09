@@ -112,7 +112,7 @@ struct Function {
   struct Function *next;
   struct Node *body;
   struct Node *args;
-  struct Var *locals;
+  struct Scope *locals;
   struct Var *params;
   char *name;
   int len;
@@ -133,6 +133,12 @@ struct StructUnion {
   int size;
 
   struct StructUnion *next;
+};
+
+struct Scope {
+  struct Scope *parent;
+
+  struct Var *variables;
 };
 
 void error_at(char *loc, char *fmt, ...);
@@ -162,7 +168,8 @@ struct Token *token;
 char *filename;
 char *user_input;
 struct Node *nodes;
-struct Var *global;
+struct Scope *globals;
+struct Scope *current_scope;
 struct Function *functions;
 struct StringLiteral *slit;
 struct StructUnion *structs;

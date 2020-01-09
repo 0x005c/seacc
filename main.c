@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
   for(; lit; lit=lit->next) gen_lit(lit);
 
   printf(".data\n");
-  struct Var *v=global;
+  struct Var *v=globals->variables;
   for(; v; v=v->next) gen_global(v);
 
   printf(".text\n");
