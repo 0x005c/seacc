@@ -168,11 +168,12 @@ void gen_while(struct Node *node, int id) {
 void gen_for(struct Node *node, int id) {
   if(node->lhs) gen(node->lhs);
   printf(".Lbegin%d:\n", id);
-  if(node->cond) gen(node->cond);
-  else printf("  pushq $1\n");
-  printf("  popq %%rax\n");
-  printf("  cmp $0, %%rax\n");
-  printf("  je  .Lend%d\n", id);
+  if(node->cond) {
+    gen(node->cond);
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%rax\n");
+    printf("  je  .Lend%d\n", id);
+  }
   gen(node->body);
   if(node->rhs) gen(node->rhs);
   printf("  jmp .Lbegin%d\n", id);
