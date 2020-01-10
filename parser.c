@@ -712,7 +712,10 @@ struct Node *stmt() {
         var->name = tok->str;
         var->len = tok->len;
         if(var->next) var->offset = var->next->offset + size_of(type);
-        else var->offset = size_of(type) + size_of(current_scope->parent->variables->type);
+        else var->offset = size_of(type) + current_scope->parent->variables->offset;
+
+        if(nodes->offset < var->offset) nodes->offset = var->offset;
+
         if(consume("=")) {
           struct Node *asgn = calloc(1, sizeof(struct Node));
           struct Node *lvar = calloc(1, sizeof(struct Node));
