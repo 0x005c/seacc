@@ -43,6 +43,8 @@ enum NodeKind {
   ND_NE,
   ND_LT,
   ND_LE,
+  ND_LAND,
+  ND_LOR,
   ND_LVAR,
   ND_GVAR,
   ND_INIT_ARRAY,

@@ -21,6 +21,16 @@ void assert_equal(int l, int r) {
   }
 }
 
+int x = 0;
+
+int f() {
+  return ++x;
+}
+
+int g() {
+  return ++x;
+}
+
 int main() {
   assert_equal(0, 0);
   assert_equal(-42, -42);
@@ -39,6 +49,27 @@ int main() {
   assert_true(123!=456);
   assert_equal(!123, 0);
   assert_equal(!0, 1);
+  assert_equal(-1&&1, 1);
+  assert_equal(-1&&0, 0);
+  assert_equal(0&&1, 0);
+  assert_equal(0&&0, 0);
+  assert_equal(-1||1, 1);
+  assert_equal(-1||0, 1);
+  assert_equal(0||1, 1);
+  assert_equal(0||0, 0);
+
+  assert_equal(f() && g(), 1);
+  assert_equal(x, 2);
+  x=-1;
+  assert_equal(f() && g(), 0);
+  assert_equal(x, 0);
+
+  x=0;
+  assert_equal(f() || g(), 1);
+  assert_equal(x, 1);
+  x=-1;
+  assert_equal(f() || g(), 1);
+  assert_equal(x, 1);
   return 0;
 }
 

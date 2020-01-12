@@ -71,6 +71,8 @@ struct Type *calc_type(struct Node *node) {
     case ND_NE:
     case ND_LT:
     case ND_LE:
+    case ND_LAND:
+    case ND_LOR:
       return &anonymous_char;
     case ND_LVAR:
     case ND_GVAR:
@@ -475,8 +477,38 @@ struct Node *equality() {
   }
 }
 
-struct Node *assign() {
+/*
+ * l_and = equality ("&&" l_and)*
+ */
+struct Node *l_and() {
   struct Node *node = equality();
+  while(consume("&&")) {
+    node = new_node(ND_LAND, node, l_and());
+  }
+  return node;
+}
+
+/*
+ * l_or = l_and ("||" l_and)*
+ */
+struct Node *l_or() {
+  struct Node *node = l_and();
+  while(consume("||")) {
+    node = new_node(ND_LOR, node, l_and());
+  }
+  return node;
+}
+
+/*
+ * syntax:
+ * assign = l_or
+ *        | unary "=" assign
+ *
+ * ast:
+ * assign = l_or ("=" assign)?
+ */
+struct Node *assign() {
+  struct Node *node = l_or();
   if(consume("="))
     node = new_node(ND_ASSIGN, node, assign());
   return node;

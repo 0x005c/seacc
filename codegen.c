@@ -323,6 +323,46 @@ void gen(struct Node *node) {
     return;
   }
 
+  if(node->kind == ND_LAND) {
+    label_id++;
+    gen(node->lhs);
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%%s\n", reg_node(node->lhs, RK_AX));
+    printf("  je .L%d\n", label_id);
+    gen(node->rhs);
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%%s\n", reg_node(node->rhs, RK_AX));
+    printf("  je .L%d\n", label_id);
+    printf("  movq $1, %%rax\n");
+    printf("  jmp .L%d\n", label_id+1);
+    printf(".L%d:\n", label_id);
+    printf("  movq $0, %%rax\n");
+    printf(".L%d:\n", label_id+1);
+    printf("  pushq %%rax\n");
+    label_id++;
+    return;
+  }
+
+  if(node->kind == ND_LOR) {
+    label_id++;
+    gen(node->lhs);
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%%s\n", reg_node(node->lhs, RK_AX));
+    printf("  jne .L%d\n", label_id);
+    gen(node->rhs);
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%%s\n", reg_node(node->rhs, RK_AX));
+    printf("  jne .L%d\n", label_id);
+    printf("  movq $0, %%rax\n");
+    printf("  jmp .L%d\n", label_id+1);
+    printf(".L%d:\n", label_id);
+    printf("  movq $1, %%rax\n");
+    printf(".L%d:\n", label_id+1);
+    printf("  pushq %%rax\n");
+    label_id++;
+    return;
+  }
+
   switch(node->kind) {
     case ND_IF:
       gen_if(node, label_id++);
