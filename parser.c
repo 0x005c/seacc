@@ -721,6 +721,7 @@ struct Node *stmt() {
           struct Node *lvar = calloc(1, sizeof(struct Node));
           lvar->kind = ND_LVAR;
           lvar->var = var;
+          lvar->offset = var->offset;
           asgn->kind = ND_ASSIGN;
           asgn->lhs = lvar;
           asgn->rhs = expr();

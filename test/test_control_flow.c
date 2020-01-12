@@ -70,6 +70,9 @@ int main() {
   x=-1;
   for(int i=0; i<10; ++i) assert_equal(i, ++x);
 
+  for(int i=0; i<10; ++i) x=i;
+  assert_equal(x, 9);
+
   // FIXME: for(x=0; x<10; x=x+1); assert_equal(x, 10);
   {}{{{{{}}}}}{}{}{{{{{}}}}}
 
