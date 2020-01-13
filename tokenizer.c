@@ -1,16 +1,19 @@
-#include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
-
 #include "seacc.h"
 
-bool is_alnum(char c) {
+int is_alnum(char c) {
   return ('a' <= c && c <= 'z') ||
          ('A' <= c && c <= 'Z') ||
          ('0' <= c && c <= '9') ||
          (c == '_');
 }
+
+int isspace(int c);
+int isdigit(int c);
+char *strncpy(char *dest, char *src, long n);
+int strncmp(char *s1, char *s2, long n);
+int memcmp(void *s1, void *s2, long n);
+void *calloc(long nmemb, long size);
+long strtol(char *beg, char **end, int base);
 
 struct Token *new_token(enum TokenKind kind, struct Token *cur, char *str, int len) {
   struct Token *tok = calloc(1, sizeof(struct Token));
@@ -24,7 +27,7 @@ struct Token *new_token(enum TokenKind kind, struct Token *cur, char *str, int l
 }
 
 struct StringLiteral *find_lit(char *str) {
-  return NULL;
+  return 0;
 }
 
 struct StringLiteral *get_lit(char *str, int len) {
@@ -45,7 +48,7 @@ struct StringLiteral *get_lit(char *str, int len) {
 
 struct Token *tokenize(char *p) {
   struct Token head;
-  head.next = NULL;
+  head.next = 0;
   struct Token *cur = &head;
 
   while(*p) {
@@ -153,7 +156,7 @@ struct Token *tokenize(char *p) {
     }
 
     if(*p == '>') {
-      if(*(p+1) == '=') { // p+1 would not be NULL (texts end with \0)
+      if(*(p+1) == '=') {
         cur = new_token(TK_RESERVED, cur, p, 2);
         p += 2;
         continue;
