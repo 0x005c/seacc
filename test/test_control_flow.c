@@ -97,7 +97,23 @@ int main() {
   assert_equal(x, 49);
 
   // FIXME: for(x=0; x<10; x=x+1); assert_equal(x, 10);
-  {}{{{{{}}}}}{}{}{{{{{}}}}}
+
+  {
+    int x = 0;
+    assert_equal(x, 0);
+    {
+      assert_equal(x, 0);
+      int x = 1;
+      assert_equal(x, 1);
+      {
+        assert_equal(x, 1);
+        int x = 2;
+        assert_equal(x, 2);
+      }
+      assert_equal(x, 1);
+    }
+    assert_equal(x, 0);
+  }
 
   return 0;
 }
