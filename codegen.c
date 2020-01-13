@@ -33,14 +33,6 @@ void to_64bit(int size, RegKind kind) {
   return;
 }
 
-char *mov(int size) {
-  if(size == 1) return "movb";
-  if(size == 2) return "movw";
-  if(size == 4) return "movl";
-  if(size == 8) return "movq";
-  return "WRONG_MOV";
-}
-
 char *suffix(int size) {
   if(size == 1) return "b";
   if(size == 2) return "w";
@@ -57,10 +49,6 @@ int size_of(struct Type *typ) {
   if(typ->ty == STRUCT) return find_struct(typ->struct_union->name)->size;
   if(typ->ty == UNION) return find_union(typ->struct_union->name)->size;
   return typ->size;
-}
-
-char *mov_node(struct Node *node) {
-  return mov(size_of_node(node));
 }
 
 char *suffix_node(struct Node *node) {
@@ -200,8 +188,8 @@ void gen_init_array(struct Node *node, int elem_size) {
     gen(cur->lhs);
     printf("  popq %%rdi\n");
     printf("  popq %%rax\n");
-    printf("  %s %%%s, %d(%%rax)\n",
-        mov(elem_size),
+    printf("  mov%s %%%s, %d(%%rax)\n",
+        suffix(elem_size),
         reg(elem_size, RK_DI),
         count*elem_size);
     count++;
@@ -282,7 +270,7 @@ void gen(struct Node *node) {
       if(!cur->type) break;
       int size = cur->type->size;
       printf("  movq %%%s, %%rax\n", param_reg[i]);
-      printf("  %s %%%s, -%d(%%rbp)\n", mov(size), reg(size, RK_AX), cur->offset);
+      printf("  mov%s %%%s, -%d(%%rbp)\n", suffix(size), reg(size, RK_AX), cur->offset);
       cur = cur->next;
     }
 
@@ -301,7 +289,7 @@ void gen(struct Node *node) {
     if(type->ty == ARY) size = 8;
     else size = type->size;
     printf("  popq %%rax\n");
-    printf("  %s (%%rax), %%%s\n", mov(size), reg(size, RK_AX));
+    printf("  mov%s (%%rax), %%%s\n", suffix(size), reg(size, RK_AX));
     printf("  pushq %%rax\n");
     return;
   }
@@ -320,7 +308,7 @@ void gen(struct Node *node) {
       member = find_member(
           find_union(typ->struct_union->name),
           node->rhs->token);
-    printf("  %s (%%rax), %%%s\n", mov(member->type->size), reg(member->type->size, RK_AX));
+    printf("  mov%s (%%rax), %%%s\n", suffix(member->type->size), reg(member->type->size, RK_AX));
     printf("  pushq %%rax\n");
     return;
   }
@@ -378,7 +366,7 @@ void gen(struct Node *node) {
   if(node->kind == ND_INC) {
     gen_lval(node->lhs);
     printf("popq %%rax\n");
-    printf("%s (%%rax), %%%s\n", mov_node(node->lhs), reg_node(node->lhs, RK_DI));
+    printf("mov%s (%%rax), %%%s\n", suffix_node(node->lhs), reg_node(node->lhs, RK_DI));
     printf("add%s $1, (%%rax)\n", suffix_node(node->lhs));
     to_64bit(size_of_node(node->lhs), RK_DI);
     printf("pushq %%rdi\n");
@@ -388,7 +376,7 @@ void gen(struct Node *node) {
   if(node->kind == ND_DEC) {
     gen_lval(node->lhs);
     printf("popq %%rax\n");
-    printf("%s (%%rax), %%%s\n", mov_node(node->lhs), reg_node(node->lhs, RK_DI));
+    printf("mov%s (%%rax), %%%s\n", suffix_node(node->lhs), reg_node(node->lhs, RK_DI));
     printf("sub%s $1, (%%rax)\n", suffix_node(node->lhs));
     to_64bit(size_of_node(node->lhs), RK_DI);
     printf("pushq %%rdi\n");
@@ -423,7 +411,7 @@ void gen(struct Node *node) {
       gen_lval(node);
       if(node->var->type->ty == ARY) return;
       printf("  popq %%rax\n");
-      printf("  %s (%%rax), %%%s\n", mov_node(node), reg_node(node, RK_AX));
+      printf("  mov%s (%%rax), %%%s\n", suffix_node(node), reg_node(node, RK_AX));
       to_64bit(size_of_node(node), RK_AX);
       printf("  pushq %%rax\n");
       return;
@@ -478,8 +466,8 @@ void gen(struct Node *node) {
       gen(node->rhs);
       printf("  popq %%rdi\n");
       printf("  popq %%rax\n");
-      printf("  %s %%%s, (%%rax)\n", mov_node(node), reg_node(node, RK_DI));
-      printf("  %s %%%s, %%%s\n", mov_node(node), reg_node(node, RK_DI), reg_node(node, RK_AX));
+      printf("  mov%s %%%s, (%%rax)\n", suffix_node(node), reg_node(node, RK_DI));
+      printf("  mov%s %%%s, %%%s\n", suffix_node(node), reg_node(node, RK_DI), reg_node(node, RK_AX));
       to_64bit(size_of_node(node), RK_AX);
       printf("  pushq %%rax\n");
       return;
