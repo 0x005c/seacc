@@ -155,17 +155,6 @@ void gen_if(struct Node *node, int id) {
   }
 }
 
-void gen_while(struct Node *node, int id) {
-  printf(".Lbegin%d:\n", id);
-  gen(node->cond);
-  printf("  popq %%rax\n");
-  printf("  cmp $0, %%rax\n");
-  printf("  je  .Lend%d\n", id);
-  gen(node->body);
-  printf("  jmp .Lbegin%d\n", id);
-  printf(".Lend%d:\n", id);
-}
-
 void gen_init_array(struct Node *node, int elem_size) {
   printf("  popq %%rax\n");
   printf("  pushq %%rax\n");
@@ -378,6 +367,23 @@ void gen(struct Node *node) {
     return;
   }
 
+  if(node->kind == ND_WHILE) {
+    beg_label = calloc(1, 15);
+    continue_label = beg_label;
+    end_label = calloc(1, 15);
+    sprintf(beg_label, ".L%d", label_id++);
+    sprintf(end_label, ".L%d", label_id++);
+    printf("%s:\n", beg_label);
+    gen(node->cond);
+    printf("  popq %%rax\n");
+    printf("  cmp $0, %%rax\n");
+    printf("  je  %s\n", end_label);
+    gen(node->body);
+    printf("  jmp %s\n", beg_label);
+    printf("%s:\n", end_label);
+    return;
+  }
+
   if(node->kind == ND_FOR) {
     beg_label = calloc(1, 15);
     continue_label = calloc(1, 15);
@@ -414,9 +420,6 @@ void gen(struct Node *node) {
   switch(node->kind) {
     case ND_IF:
       gen_if(node, label_id++);
-      return;
-    case ND_WHILE:
-      gen_while(node, label_id++);
       return;
     case ND_RETURN:
       gen(node->lhs);

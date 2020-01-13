@@ -115,6 +115,11 @@ int main() {
     assert_equal(x, 0);
   }
 
+  while(1) {
+    if(1<0) continue;
+    break;
+  }
+
   return 0;
 }
 
