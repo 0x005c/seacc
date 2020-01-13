@@ -321,7 +321,6 @@ void gen(struct Node *node) {
   }
 
   if(node->kind == ND_LAND) {
-    label_id++;
     gen(node->lhs);
     printf("  popq %%rax\n");
     printf("  cmp $0, %%%s\n", reg_node(node->lhs, RK_AX));
@@ -336,12 +335,11 @@ void gen(struct Node *node) {
     printf("  movq $0, %%rax\n");
     printf(".L%d:\n", label_id+1);
     printf("  pushq %%rax\n");
-    label_id++;
+    label_id+=2;
     return;
   }
 
   if(node->kind == ND_LOR) {
-    label_id++;
     gen(node->lhs);
     printf("  popq %%rax\n");
     printf("  cmp $0, %%%s\n", reg_node(node->lhs, RK_AX));
@@ -356,7 +354,7 @@ void gen(struct Node *node) {
     printf("  movq $1, %%rax\n");
     printf(".L%d:\n", label_id+1);
     printf("  pushq %%rax\n");
-    label_id++;
+    label_id+=2;
     return;
   }
 
