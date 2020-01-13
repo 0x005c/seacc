@@ -36,7 +36,8 @@ struct StringLiteral *get_lit(char *str, int len) {
 
   lit = calloc(1, sizeof(struct StringLiteral));
   lit->str = text;
-  lit->id = slit ? slit->id+1 : 0;
+  if(slit) lit->id = slit->id+1;
+  else lit->id = 0;
   lit->next = slit;
   slit = lit;
   return lit;
@@ -188,6 +189,10 @@ struct Token *tokenize(char *p) {
       int i;
       for(i=1; p[i]!='"'; i++) {
         if(p[i] == '\0') error_at(p+i, "Reached end of file before closing '\"'");
+        if(p[i] == '\\') {
+          i++;
+          continue;
+        }
         if(p[i] == '"') break;
       }
       i++;
