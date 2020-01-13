@@ -262,6 +262,19 @@ struct Token *tokenize(char *p) {
       continue;
     }
 
+    if(*p == '0') {
+      if(p[1] == 'x') {
+        int digitlen = 0;
+        while(isdigit(*(p+2+digitlen))) {
+          digitlen++;
+        }
+        cur = new_token(TK_NUM, cur, p, digitlen+2);
+        p+=2;
+        cur->val = strtol(p, &p, 16);
+        continue;
+      }
+    }
+
     if(isdigit(*p)) {
       int digitlen = 0;
       while(isdigit(*(p+digitlen))) {

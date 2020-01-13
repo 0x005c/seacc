@@ -42,5 +42,8 @@ int main() {
   assert_true(strncmp(s, "abcd", 3) == 0);
   assert_true(strncmp(s, "abc", 3) == 0);
   assert_true(strncmp(s, "ab", 3));
+
+  assert_equal(0x10, 16);
+  assert_equal(0xff, 255);
   return 0;
 }
