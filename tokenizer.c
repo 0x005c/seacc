@@ -340,7 +340,7 @@ struct Token *tokenize(char *p) {
       continue;
     }
 
-    error("字句解析できません");
+    error_at(p, "Failed to tokenize");
   }
 
   new_token(TK_EOF, cur, p, 1);
