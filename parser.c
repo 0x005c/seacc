@@ -536,14 +536,28 @@ struct Node *l_or() {
  * syntax:
  * assign = l_or
  *        | unary "=" assign
+ *        | unary "+=" assign
+ *        | unary "-=" assign
  *
  * ast:
- * assign = l_or ("=" assign)?
+ * assign = l_or (("="|"+="|"-=") assign)?
  */
 struct Node *assign() {
   struct Node *node = l_or();
-  if(consume("="))
+  if(consume("=")) {
     node = new_node(ND_ASSIGN, node, assign());
+    return node;
+  }
+  if(consume("+=")) {
+    struct Node *rhs = new_node(ND_ADD, node, assign());
+    node = new_node(ND_ASSIGN, node, rhs);
+    return node;
+  }
+  if(consume("-=")) {
+    struct Node *rhs = new_node(ND_SUB, node, assign());
+    node = new_node(ND_ASSIGN, node, rhs);
+    return node;
+  }
   return node;
 }
 

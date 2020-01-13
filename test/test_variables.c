@@ -66,6 +66,11 @@ int main() {
   assert_equal(lx+ly, 101);
   ly=0; ly=ly+10;
   assert_equal(ly, 10);
+  x=0;
+  x+=123;
+  assert_equal(x, 123);
+  x-=456;
+  assert_equal(x, 123-456);
   return 0;
 }
 
