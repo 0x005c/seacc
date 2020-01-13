@@ -724,6 +724,18 @@ struct Node *stmt() {
     return node;
   }
 
+  if(consume_kind(TK_CONTINUE)) {
+    node = new_node(ND_CONTINUE, NULL, NULL);
+    expect(";");
+    return node;
+  }
+
+  if(consume_kind(TK_BREAK)) {
+    node = new_node(ND_BREAK, NULL, NULL);
+    expect(";");
+    return node;
+  }
+
   if(consume_kind(TK_IF)) {
     node = calloc(1, sizeof(struct Node));
     node->kind = ND_IF;

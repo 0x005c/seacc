@@ -18,6 +18,8 @@ enum TokenKind {
   TK_SIZEOF,
   TK_NUM,
   TK_EOF,
+  TK_CONTINUE,
+  TK_BREAK,
 };
 
 struct Token {
@@ -65,6 +67,8 @@ enum NodeKind {
   ND_NOT,
   ND_INC,
   ND_DEC,
+  ND_CONTINUE,
+  ND_BREAK,
 };
 
 // TODO: clean up

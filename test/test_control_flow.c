@@ -73,6 +73,20 @@ int main() {
   for(int i=0; i<10; ++i) x=i;
   assert_equal(x, 9);
 
+  for(int i=0; i<10; i++) {
+    x = i;
+    if(x > 5) break;
+  }
+  assert_equal(x, 6);
+
+  x=-3;
+  for(int i=0; i<10; i++) {
+    x++;
+    if(x<0) continue;
+    x--;
+  }
+  assert_equal(x, -1);
+
   // FIXME: for(x=0; x<10; x=x+1); assert_equal(x, 10);
   {}{{{{{}}}}}{}{}{{{{{}}}}}
 

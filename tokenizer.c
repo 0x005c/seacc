@@ -334,6 +334,18 @@ struct Token *tokenize(char *p) {
       continue;
     }
 
+    if(memcmp(p, "continue", 8) == 0 && !is_alnum(p[8])) {
+      cur = new_token(TK_CONTINUE, cur, p, 8);
+      p += 8;
+      continue;
+    }
+
+    if(memcmp(p, "break", 5) == 0 && !is_alnum(p[5])) {
+      cur = new_token(TK_BREAK, cur, p, 5);
+      p += 5;
+      continue;
+    }
+
     if(memcmp(p, "char", 4) == 0 && !is_alnum(p[4])) {
       cur = new_token(TK_CHAR, cur, p, 4);
       p += 4;

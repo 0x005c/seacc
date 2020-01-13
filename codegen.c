@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "seacc.h"
@@ -165,21 +166,6 @@ void gen_while(struct Node *node, int id) {
   printf(".Lend%d:\n", id);
 }
 
-void gen_for(struct Node *node, int id) {
-  if(node->lhs) gen(node->lhs);
-  printf(".Lbegin%d:\n", id);
-  if(node->cond) {
-    gen(node->cond);
-    printf("  popq %%rax\n");
-    printf("  cmp $0, %%rax\n");
-    printf("  je  .Lend%d\n", id);
-  }
-  gen(node->body);
-  if(node->rhs) gen(node->rhs);
-  printf("  jmp .Lbegin%d\n", id);
-  printf(".Lend%d:\n", id);
-}
-
 void gen_init_array(struct Node *node, int elem_size) {
   printf("  popq %%rax\n");
   printf("  pushq %%rax\n");
@@ -199,16 +185,25 @@ void gen_init_array(struct Node *node, int elem_size) {
 }
 
 int label_id = 0;
+char *beg_label;
+char *continue_label;
+char *end_label;
 
 void gen(struct Node *node) {
   if(node->kind == ND_BLOCK) {
     struct Node *cur = node->body;
     while(cur) {
+      char *bl = beg_label;
+      char *el = end_label;
       gen(cur);
+      beg_label = bl;
+      end_label = el;
       switch(cur->kind) {
         case ND_IF:
         case ND_WHILE:
         case ND_FOR:
+        case ND_CONTINUE:
+        case ND_BREAK:
           break;
         default:
           printf("  popq %%rax\n");
@@ -383,15 +378,45 @@ void gen(struct Node *node) {
     return;
   }
 
+  if(node->kind == ND_FOR) {
+    beg_label = calloc(1, 15);
+    continue_label = calloc(1, 15);
+    end_label = calloc(1, 15);
+    sprintf(beg_label, ".L%d", label_id++);
+    sprintf(continue_label, ".L%d", label_id++);
+    sprintf(end_label, ".L%d", label_id++);
+    if(node->lhs) gen(node->lhs);
+    printf("%s:\n", beg_label);
+    if(node->cond) {
+      gen(node->cond);
+      printf("  popq %%rax\n");
+      printf("  cmp $0, %%rax\n");
+      printf("  je  %s\n", end_label);
+    }
+    gen(node->body);
+    printf("%s:\n", continue_label);
+    if(node->rhs) gen(node->rhs);
+    printf("  jmp %s\n", beg_label);
+    printf("%s:\n", end_label);
+    return;
+  }
+
+  if(node->kind == ND_CONTINUE) {
+    printf("  jmp %s\n", continue_label);
+    return;
+  }
+
+  if(node->kind == ND_BREAK) {
+    printf("  jmp %s\n", end_label);
+    return;
+  }
+
   switch(node->kind) {
     case ND_IF:
       gen_if(node, label_id++);
       return;
     case ND_WHILE:
       gen_while(node, label_id++);
-      return;
-    case ND_FOR:
-      gen_for(node, label_id++);
       return;
     case ND_RETURN:
       gen(node->lhs);
