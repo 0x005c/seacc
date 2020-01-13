@@ -14,4 +14,4 @@ jobs:
     - name: make test
       run: make test
     - name: self-compile
-      run: test/test_self_compile.sh ; test/test_self_compile.sh
+      run: test/test_self_compile.sh ; test/test_self_compile.sh ; make test
