@@ -78,6 +78,8 @@ int main() {
   assert_equal(x--, 1);
   assert_equal(x, 0);
 
+  char c = 'a';
+  assert_true(!!c);
   return 0;
 }
 

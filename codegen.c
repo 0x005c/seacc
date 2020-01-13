@@ -312,7 +312,7 @@ void gen(struct Node *node) {
 
   if(node->kind == ND_NOT) {
     gen(node->lhs);
-    printf("  popq %%%s\n", reg_node(node->lhs, RK_AX));
+    printf("  popq %%rax\n");
     printf("  cmp $0, %%%s\n", reg_node(node->lhs, RK_AX));
     printf("  sete %%al\n");
     printf("  movzb %%al, %%rax\n");
