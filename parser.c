@@ -400,6 +400,7 @@ struct Node *postfix() {
   }
 }
 
+struct Type *specifier();
 /*
  * unary = "+"? postfix
  *       | "-"? postfix
@@ -432,8 +433,22 @@ struct Node *unary() {
     return new_node(ND_ASSIGN, node,
         new_node_sub(node, new_node_num(1)));
   }
-  if(consume_kind(TK_SIZEOF))
+  if(consume_kind(TK_SIZEOF)) {
+    struct Token *tok = token;
+    if(consume("(")) {
+      if(check_specifier()) {
+        struct Node *node = new_node_num(size_of(specifier()));
+        expect(")");
+        return node;
+      }
+      else {
+        token = tok;
+        struct Node *node = new_node_num(size_of(calc_type(unary())));
+        return node;
+      }
+    }
     return new_node_num(size_of(calc_type(unary())));
+  }
   return postfix();
 }
 
@@ -528,7 +543,6 @@ struct Node *expr() {
   return assign();
 }
 
-struct Type *specifier();
 /*
  * struct_union = ident "{" (specifier ident ";")+ "}"
  *              | ident

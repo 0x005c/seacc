@@ -21,6 +21,12 @@ void assert_equal(int l, int r) {
   }
 }
 
+struct Struct {
+  long x;
+  int y;
+  char z;
+};
+
 int main() {
   int x;
   int *************y;
@@ -61,6 +67,12 @@ int main() {
   long lx;
   assert_equal(sizeof(lx), 8);
   assert_equal(sizeof(&lx), 8);
+
+  assert_equal(sizeof(long), 8);
+  assert_equal(sizeof(int), 4);
+  assert_equal(sizeof(char), 1);
+  assert_equal(sizeof(struct Struct), 8+4+1);
+
   return 0;
 }
 
