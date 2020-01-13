@@ -71,6 +71,9 @@ int main() {
   assert_equal(x, 123);
   x-=456;
   assert_equal(x, 123-456);
+  int *zp = z;
+  zp += 3;
+  assert_equal(*zp, 3);
   return 0;
 }
 

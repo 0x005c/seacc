@@ -549,12 +549,12 @@ struct Node *assign() {
     return node;
   }
   if(consume("+=")) {
-    struct Node *rhs = new_node(ND_ADD, node, assign());
+    struct Node *rhs = new_node_add(node, assign());
     node = new_node(ND_ASSIGN, node, rhs);
     return node;
   }
   if(consume("-=")) {
-    struct Node *rhs = new_node(ND_SUB, node, assign());
+    struct Node *rhs = new_node_sub(node, assign());
     node = new_node(ND_ASSIGN, node, rhs);
     return node;
   }
