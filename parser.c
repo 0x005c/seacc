@@ -191,6 +191,14 @@ bool at_eof() {
   return token->kind == TK_EOF;
 }
 
+int get_max_offset(struct Scope *scope) {
+  while(scope) {
+    if(scope->variables) return scope->variables->offset;
+    scope = scope->parent;
+  }
+  return 0;
+}
+
 struct Function *find_func(struct Token *tok) {
   for(struct Function *func = functions; func; func = func->next)
     if(func->len == tok->len && !strcmp(tok->str, func->name))
@@ -780,7 +788,7 @@ struct Node *stmt() {
         var->name = tok->str;
         var->len = tok->len;
         if(var->next) var->offset = var->next->offset + size_of(type);
-        else var->offset = size_of(type) + current_scope->parent->variables->offset;
+        else var->offset = size_of(type) + get_max_offset(current_scope->parent);
 
         if(nodes->offset < var->offset) nodes->offset = var->offset;
 

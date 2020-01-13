@@ -194,9 +194,11 @@ void gen(struct Node *node) {
     struct Node *cur = node->body;
     while(cur) {
       char *bl = beg_label;
+      char *cl = continue_label;
       char *el = end_label;
       gen(cur);
       beg_label = bl;
+      continue_label = cl;
       end_label = el;
       switch(cur->kind) {
         case ND_IF:
