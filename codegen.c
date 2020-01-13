@@ -41,6 +41,14 @@ char *mov(int size) {
   return "WRONG_MOV";
 }
 
+char *suffix(int size) {
+  if(size == 1) return "b";
+  if(size == 2) return "w";
+  if(size == 4) return "l";
+  if(size == 8) return "q";
+  return NULL;
+}
+
 int size_of_node(struct Node *node) {
   return size_of(calc_type(node));
 }
@@ -53,6 +61,10 @@ int size_of(struct Type *typ) {
 
 char *mov_node(struct Node *node) {
   return mov(size_of_node(node));
+}
+
+char *suffix_node(struct Node *node) {
+  return suffix(size_of_node(node));
 }
 
 char *reg_node(struct Node *node, RegKind kind) {
@@ -360,6 +372,26 @@ void gen(struct Node *node) {
     printf(".L%d:\n", label_id+1);
     printf("  pushq %%rax\n");
     label_id++;
+    return;
+  }
+
+  if(node->kind == ND_INC) {
+    gen_lval(node->lhs);
+    printf("popq %%rax\n");
+    printf("%s (%%rax), %%%s\n", mov_node(node->lhs), reg_node(node->lhs, RK_DI));
+    printf("add%s $1, (%%rax)\n", suffix_node(node->lhs));
+    to_64bit(size_of_node(node->lhs), RK_DI);
+    printf("pushq %%rdi\n");
+    return;
+  }
+
+  if(node->kind == ND_DEC) {
+    gen_lval(node->lhs);
+    printf("popq %%rax\n");
+    printf("%s (%%rax), %%%s\n", mov_node(node->lhs), reg_node(node->lhs, RK_DI));
+    printf("sub%s $1, (%%rax)\n", suffix_node(node->lhs));
+    to_64bit(size_of_node(node->lhs), RK_DI);
+    printf("pushq %%rdi\n");
     return;
   }
 

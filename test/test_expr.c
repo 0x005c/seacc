@@ -70,6 +70,13 @@ int main() {
   x=-1;
   assert_equal(f() || g(), 1);
   assert_equal(x, 1);
+
+  x=0;
+  assert_equal(x++, 0);
+  assert_equal(x, 1);
+  assert_equal(x--, 1);
+  assert_equal(x, 0);
+
   return 0;
 }
 

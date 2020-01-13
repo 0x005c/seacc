@@ -79,6 +79,8 @@ struct Type *calc_type(struct Node *node) {
       return node->var->type;
     case ND_INIT:
     case ND_ASSIGN:
+    case ND_INC:
+    case ND_DEC:
       return calc_type(node->lhs);
     case ND_CALL:
       return node->func->type;
@@ -358,7 +360,7 @@ struct Node *new_node_name(struct Token *tok) {
 }
 
 /*
- * postfix = primary ("[" expr "]")*
+ * postfix = primary ("[" expr "]" | "." ident | "->" ident | "++" | "--")*
  */
 struct Node *postfix() {
   struct Node *node = primary();
@@ -385,6 +387,14 @@ struct Node *postfix() {
         continue;
       }
       else error("identifier expected");
+    }
+    if(consume("++")) {
+      node = new_node(ND_INC, node, NULL);
+      continue;
+    }
+    if(consume("--")) {
+      node = new_node(ND_DEC, node, NULL);
+      continue;
     }
     return node;
   }
