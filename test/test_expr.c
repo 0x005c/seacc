@@ -80,6 +80,7 @@ int main() {
 
   char c = 'a';
   assert_true(!!c);
+  assert_true(1 || (0 && 0));
   return 0;
 }
 
