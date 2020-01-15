@@ -137,7 +137,7 @@ void gen_if(struct Node *node, int id) {
   if(node->elsebody) {
     gen(node->cond);
     printf("  popq %%rax\n");
-    printf("  cmp $0, %%rax\n");
+    printf("  cmp $0, %%%s\n", reg_node(node->cond, RK_AX));
     printf("  je  .Lelse%d\n", id);
     gen(node->body);
     printf("  jmp .Lend%d\n", id);
@@ -148,7 +148,7 @@ void gen_if(struct Node *node, int id) {
   else {
     gen(node->cond);
     printf("  popq %%rax\n");
-    printf("  cmp $0, %%rax\n");
+    printf("  cmp $0, %%%s\n", reg_node(node->cond, RK_AX));
     printf("  je  .Lend%d\n", id);
     gen(node->body);
     printf(".Lend%d:\n", id);
@@ -384,7 +384,7 @@ void gen(struct Node *node) {
     printf("%s:\n", beg_label);
     gen(node->cond);
     printf("  popq %%rax\n");
-    printf("  cmp $0, %%rax\n");
+    printf("  cmp $0, %%%s\n", reg_node(node->cond, RK_AX));
     printf("  je  %s\n", end_label);
     gen(node->body);
     printf("  jmp %s\n", beg_label);
@@ -404,7 +404,7 @@ void gen(struct Node *node) {
     if(node->cond) {
       gen(node->cond);
       printf("  popq %%rax\n");
-      printf("  cmp $0, %%rax\n");
+      printf("  cmp $0, %%%s\n", reg_node(node->cond, RK_AX));
       printf("  je  %s\n", end_label);
     }
     gen(node->body);

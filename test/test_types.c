@@ -73,6 +73,14 @@ int main() {
   assert_equal(sizeof(char), 1);
   assert_equal(sizeof(struct Struct), 8+4+1);
 
+  char *s;
+  s = "a";
+  assert_true(s[0]);
+  assert_true(!s[1]); // s[1] is zero here
+  x=0;
+  if(s[1]) x=1; // s[1] must not be true
+  assert_true(!x);
+
   return 0;
 }
 
