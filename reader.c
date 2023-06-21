@@ -34,7 +34,8 @@ char *read_file(char* path) {
     ++size;
   }
   buf[size] = '\0';
-  fclose(fp);
+  // XXX: fclose(fp) fails probably because of the wrong stack align
+  // fclose(fp);
   return buf;
 }
 
